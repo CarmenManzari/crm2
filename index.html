@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Servizi</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F5F0E8;color:#2C2416;font-size:13px;display:flex;min-height:100vh}
+:root{
+  --bg:#F5F0E8;--surface:#FDFAF5;--surface2:#EDE8DC;--border:#D8D0C0;--border2:#C8BFA8;
+  --accent:#4A7C59;--accent-light:#EAF3DE;--accent-dark:#2F5038;
+  --warm:#8B6914;--warm-light:#FDF4DC;--warm-border:#DFC980;
+  --luce-bg:#E8F1FA;--luce-text:#1A4A7C;--luce-border:#A8C8E8;
+  --gas-bg:#EAF3DE;--gas-text:#2F5038;--gas-border:#A8D090;
+  --tel-bg:#FAEADC;--tel-text:#7C2800;--tel-border:#E8B090;
+  --ass-bg:#FDF4DC;--ass-text:#6B4800;--ass-border:#DFC980;
+  --auto-bg:#EAE8FA;--auto-text:#2A2060;--auto-border:#B0A8E8;
+  --radius:8px;--radius-lg:12px;
+  --sidebar:220px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);min-height:100vh;background:#2F3D2A;color:#E8E0D0;display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;box-shadow:2px 0 12px rgba(0,0,0,0.15)}
+.sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.sidebar-logo h1{font-size:15px;font-weight:700;color:#F0EAD8;letter-spacing:-.3px;line-height:1.3}
+.sidebar-logo small{font-size:10px;color:#98A090;display:block;margin-top:3px}
+.sidebar-sync{padding:8px 16px;font-size:10px;color:#98A090;border-bottom:1px solid rgba(255,255,255,0.08);min-height:30px;display:flex;align-items:center;gap:5px}
+.sidebar-nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#6A7A60;padding:10px 8px 4px}
+.nav-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#C8C0B0;border:none;background:transparent;font-family:inherit;width:100%;text-align:left;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:#F0EAD8}
+.nav-btn.active{background:rgba(234,243,222,0.15);color:#C8E8A8;font-weight:600}
+.nav-btn .icon{width:16px;text-align:center;font-size:13px}
+.sidebar-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:4px}
+
+/* ── MAIN CONTENT ── */
+.page-wrap{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:14px;font-weight:700;color:#2C2416}
+.topbar-right{display:flex;gap:6px;flex-wrap:wrap}
+.main{padding:16px 20px;flex:1}
+
+/* ── BUTTONS ── */
+.btn{padding:6px 13px;border-radius:var(--radius);font-size:12px;cursor:pointer;border:1px solid transparent;font-family:inherit;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-secondary{background:var(--surface);color:#2C2416;border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-danger{background:#FAEAE8;color:#7C1A1A;border-color:#E8B0A8}
+.btn-danger:hover{background:#F0C0B8}
+.btn-green{background:var(--accent-light);color:var(--accent-dark);border-color:var(--gas-border)}
+.btn-green:hover{background:#D0E8B8}
+.btn-orange{background:var(--warm-light);color:var(--warm);border-color:var(--warm-border)}
+.btn-orange:hover{background:#F0DFA0}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:16px}
+.stat{background:var(--surface);border-radius:var(--radius);padding:10px 12px;border:1px solid var(--border)}
+.stat-label{font-size:10px;color:#887860;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-size:20px;font-weight:700}
+.stat.luce .stat-val{color:#1A4A7C}
+.stat.gas .stat-val{color:#2F5038}
+.stat.tel .stat-val{color:#7C2800}
+.stat.ass .stat-val{color:#6B4800}
+.stat.auto .stat-val{color:#2A2060}
+.stat.scad .stat-val{color:#8B4400}
+.stat.beghe .stat-val{color:#7C1A1A}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.tab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;background:var(--surface);color:#887860;border-color:var(--border)}
+.tab.luce{background:var(--luce-bg);color:var(--luce-text);border-color:var(--luce-border)}
+.tab.gas{background:var(--gas-bg);color:var(--gas-text);border-color:var(--gas-border)}
+.tab.tel{background:var(--tel-bg);color:var(--tel-text);border-color:var(--tel-border)}
+.tab.ass{background:var(--ass-bg);color:var(--ass-text);border-color:var(--ass-border)}
+.tab.auto{background:var(--auto-bg);color:var(--auto-text);border-color:var(--auto-border)}
+.tab:hover,.tab.active{box-shadow:0 0 0 2px currentColor}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filters input,.filters select{font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:#2C2416;font-family:inherit}
+.filters input{flex:1;min-width:180px}
+.filters input:focus,.filters select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{text-align:left;padding:9px 10px;font-size:10px;font-weight:700;color:#887860;border-bottom:1px solid var(--border);background:var(--surface2);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden}
+tbody tr{border-bottom:1px solid #EDE8DC;cursor:pointer;transition:background .1s}
+td{vertical-align:middle;line-height:1.4}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#F8F4EC}
+td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.badge.luce{background:var(--luce-bg);color:var(--luce-text)}
+.badge.gas{background:var(--gas-bg);color:var(--gas-text)}
+.badge.tel{background:var(--tel-bg);color:var(--tel-text)}
+.badge.ass{background:var(--ass-bg);color:var(--ass-text)}
+.badge.auto{background:var(--auto-bg);color:var(--auto-text)}
+.badge.attivo{background:#EAF3DE;color:#2F5038}
+.badge.scaduto{background:#FAEAE8;color:#7C1A1A}
+.badge.in-lavorazione{background:#FDF4DC;color:#6B4800}
+.badge.proposta{background:#EAE8FA;color:#2A2060}
+.badge.pagato{background:#EAF3DE;color:#2F5038}
+.badge.ko{background:#FAEAE8;color:#7C1A1A}
+.badge.parziale{background:#FDF4DC;color:#6B4800}
+.badge.in-attesa{background:#EDE8DC;color:#887860}
+.btn-mod{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:#887860;font-family:inherit}
+.btn-mod:hover{background:var(--surface2)}
+.empty{text-align:center;padding:2.5rem;color:#B0A890;font-size:13px}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(44,36,22,0.5);z-index:200;align-items:flex-start;justify-content:center;padding:30px 12px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:20px;width:100%;max-width:640px;margin-bottom:40px}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:4px;color:#2C2416}
+.modal-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)}
+.mtab{padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;color:#887860;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.mtab.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
+.mtab-panel{display:none}
+.mtab-panel.active{display:block}
+.section-title{font-size:10px;font-weight:700;color:#887860;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:3px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:10px;color:#887860;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.form-group input,.form-group select,.form-group textarea{font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:#2C2416;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
+.form-group textarea{resize:vertical;height:55px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* ── POD/PDR cards ── */
+.pod-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.pod-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;position:relative}
+.pod-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pod-card-title{font-size:11px;font-weight:700;color:#887860;text-transform:uppercase;letter-spacing:.4px}
+.pod-remove{background:#FAEAE8;color:#7C1A1A;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-add-pod{background:var(--luce-bg);color:var(--luce-text);border:1px solid var(--luce-border);border-radius:var(--radius);padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+.btn-add-pod:hover{background:var(--luce-border)}
+
+/* ── Beghe ── */
+.bega-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bega-card{background:var(--warm-light);border:1px solid var(--warm-border);border-radius:var(--radius);padding:12px;position:relative}
+.bega-card.chiusa{background:var(--surface2);border-color:var(--border);opacity:.8}
+.bega-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.bega-tipo{font-size:11px;font-weight:700;color:var(--warm)}
+.bega-card.chiusa .bega-tipo{color:#887860}
+.bega-remove{background:#FAEAE8;color:#7C1A1A;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-add-bega{background:var(--warm-light);color:var(--warm);border:1px solid var(--warm-border);border-radius:var(--radius);padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+.btn-add-bega:hover{background:var(--warm-border)}
+
+/* ── Detail ── */
+.detail-modal{max-width:620px}
+.detail-tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+.dtab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#887860;border-bottom:2px solid transparent;margin-bottom:-2px}
+.dtab.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
+.dtab-panel{display:none}
+.dtab-panel.active{display:block}
+.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee;flex-wrap:wrap}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.detail-section{margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+.detail-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;gap:8px}
+.detail-row span:first-child{color:#888;min-width:140px;flex-shrink:0}
+.detail-row span:last-child{font-weight:600;text-align:right;word-break:break-all}
+.alert-warn{background:var(--ass-bg);color:var(--ass-text);border:1px solid var(--ass-border);border-radius:var(--radius);padding:7px 10px;font-size:11px;margin-bottom:10px;font-weight:600}
+.alert-ok{background:var(--gas-bg);color:var(--gas-text);border:1px solid var(--gas-border);border-radius:var(--radius);padding:7px 10px;font-size:11px;margin-bottom:10px;font-weight:600}
+.alert-scad{background:var(--tel-bg);color:var(--tel-text);border:1px solid var(--tel-border);border-radius:var(--radius);padding:7px 10px;font-size:11px;margin-bottom:10px;font-weight:600}
+.pod-detail-card{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:var(--radius);padding:10px;margin-bottom:8px}
+.pod-detail-title{font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.bega-detail-card{border-radius:var(--radius);padding:10px;margin-bottom:8px;border:1px solid #FAC775;background:#fff8f0}
+.bega-detail-card.chiusa{background:#f9f9f9;border-color:#ddd}
+.bega-detail-title{font-size:11px;font-weight:700;color:#633806;margin-bottom:4px}
+.bega-detail-card.chiusa .bega-detail-title{color:#888}
+
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media(max-width:768px){
+  .sidebar{width:56px}
+  .sidebar-logo,.sidebar-sync,.nav-label,.nav-btn span:not(.icon),.sidebar-footer .nav-btn span:not(.icon){display:none}
+  .nav-btn{justify-content:center;padding:10px 0}
+  .page-wrap{margin-left:56px}
+  .form-grid,.form-grid-3{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+  table{font-size:11px}
+  td,th{padding:7px 6px}
+}
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Gruppo tu.telati</h1>
+    <small>CRM Servizi — Emanuele e Carmen</small>
+  </div>
+  <div class="sidebar-sync">
+    <span id="sync_status">☁ Connessione...</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Servizi</div>
+    <button class="nav-btn active" id="nav_all" onclick="setTab('all',this)"><span class="icon">📋</span> Tutti i contratti</button>
+    <button class="nav-btn" id="nav_luce" onclick="setTab('luce',this)"><span class="icon">⚡</span> Luce</button>
+    <button class="nav-btn" id="nav_gas" onclick="setTab('gas',this)"><span class="icon">🔥</span> Gas</button>
+    <button class="nav-btn" id="nav_tel" onclick="setTab('tel',this)"><span class="icon">📱</span> Telefonia</button>
+    <button class="nav-btn" id="nav_ass" onclick="setTab('ass',this)"><span class="icon">🛡</span> Assicurazioni</button>
+    <button class="nav-btn" id="nav_auto" onclick="setTab('auto',this)"><span class="icon">🚗</span> Noleggio Auto</button>
+    <div class="nav-label">Gestione</div>
+    <button class="nav-btn" id="nav_beghe" onclick="setTab('beghe',this)"><span class="icon">⚠️</span> Pratiche aperte</button>
+    <button class="nav-btn" onclick="openOfferte()"><span class="icon">📊</span> Offerte</button>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="nav-btn" onclick="openNew()"><span class="icon">➕</span> Nuovo contratto</button>
+    <button class="nav-btn" onclick="document.getElementById('importModal').classList.add('open')"><span class="icon">⬆</span> Importa</button>
+    <button class="nav-btn" onclick="exportCSV()"><span class="icon">⬇</span> Export CSV</button>
+    <button class="nav-btn" onclick="document.getElementById('restoreModal').classList.add('open')"><span class="icon">♻</span> Ripristina backup</button>
+  </div>
+</div>
+
+<!-- CONTENUTO PRINCIPALE -->
+<div class="page-wrap">
+<div class="topbar">
+  <span class="topbar-title" id="topbar_title">Tutti i contratti</span>
+  <div class="topbar-right">
+    <button class="btn btn-danger" id="btn_del_sel" style="display:none" onclick="eliminaSelezionati()">🗑 Elimina selezionati</button>
+    <button class="btn btn-secondary" id="btn_desel" style="display:none" onclick="deselezionaTutti()">✕ Deseleziona</button>
+    <span id="sel_count" style="font-size:12px;color:#887860;display:none"></span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="stats" id="stats"></div>
+
+  <div class="filters">
+    <input type="text" id="search" placeholder="🔍 Cerca cliente, fornitore, POD/PDR, targa, CF..." oninput="renderTable()">
+    <select id="fstato" onchange="renderTable()">
+      <option value="">Tutti gli stati</option>
+      <option>Attivo</option><option>Proposta</option>
+      <option>In lavorazione</option><option>Scaduto</option>
+    </select>
+    <select id="fscad" onchange="renderTable()">
+      <option value="">Scadenza</option>
+      <option value="30">Entro 30gg</option>
+      <option value="60">Entro 60gg</option>
+      <option value="90">Entro 90gg</option>
+    </select>
+    <select id="ftipo_cliente" onchange="renderTable()">
+      <option value="">Tutti i clienti</option>
+      <option value="residenziale">Residenziale</option>
+      <option value="business">Business</option>
+    </select>
+    <select id="fpagamento" onchange="renderTable()" style="border-color:#C0DD97;color:#27500A;font-weight:600">
+      <option value="">Tutti i pagamenti</option>
+      <option value="pagato">✅ Pagato</option>
+      <option value="ko">❌ Non pagato / KO</option>
+      <option value="parziale">⚠️ Parziale</option>
+      <option value="in-attesa">⏳ In attesa</option>
+    </select>
+    <select id="fbeghe" onchange="renderTable()" style="border-color:#FAC775;color:#633806;font-weight:600">
+      <option value="">Tutte le pratiche</option>
+      <option value="aperte">⚠️ Solo con pratiche aperte</option>
+      <option value="chiuse">✅ Solo pratiche chiuse</option>
+      <option value="qualsiasi">📁 Tutti con pratiche</option>
+    </select>
+    <select id="finserito" onchange="renderTable()" style="min-width:130px">
+      <option value="">📅 Tutti i mesi</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:32px"><input type="checkbox" id="chk_all" onclick="selezionaTutti(this)" title="Seleziona tutti" style="cursor:pointer"></th>
+        <th style="width:130px">Cliente</th>
+        <th style="width:60px">Tipo</th>
+        <th style="width:80px">Servizio</th>
+        <th style="width:105px">Fornitore</th>
+        <th style="width:75px">Stato</th>
+        <th style="width:85px">Scadenza</th>
+        <th style="width:65px">€/mese</th>
+        <th style="width:65px">Pagamento</th>
+        <th style="width:75px">Inserito il</th>
+        <th style="width:45px">Azioni</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">Nessun contratto trovato</div>
+  </div>
+</div>
+
+
+<!-- ===== MODAL OFFERTE ===== -->
+<div class="modal-bg" id="offerteModal">
+<div class="modal" style="max-width:700px">
+  <h2>📊 Gestione Offerte</h2>
+  <div style="font-size:12px;color:#555;margin-bottom:12px;line-height:1.6">
+    Inserisci le tue offerte con nome, fornitore e prezzo. Nel form contratto potrai selezionarle e si compileranno automaticamente.
+    <br><span style="color:#888;font-size:11px">Le modifiche al prezzo si aggiornano automaticamente nei nuovi contratti. I contratti esistenti mantengono il prezzo salvato.</span>
+  </div>
+  
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="off_tipo" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-family:Arial">
+      <option value="luce">⚡ Luce</option>
+      <option value="gas">🔥 Gas</option>
+      <option value="tel">📱 Telefonia</option>
+      <option value="dual">⚡🔥 Dual (Luce+Gas)</option>
+      <option value="altro">Altro</option>
+    </select>
+    <input id="off_fornitore" type="text" placeholder="Fornitore (es. Acea, Enel...)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
+    <input id="off_nome" type="text" placeholder="Nome offerta (es. Acea Fix 12M)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
+    <input id="off_prezzo" type="text" placeholder="Prezzo (es. 0,07 €/kWh)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="aggiungiOfferta()">+ Aggiungi</button>
+  </div>
+
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="off_filtri">
+    <button class="btn btn-secondary" style="font-size:11px;padding:3px 10px" onclick="filtraOfferte('tutti')">Tutti</button>
+    <button class="btn" style="font-size:11px;padding:3px 10px;background:#E6F1FB;color:#0C447C;border:1px solid #B5D4F4" onclick="filtraOfferte('luce')">⚡ Luce</button>
+    <button class="btn" style="font-size:11px;padding:3px 10px;background:#EAF3DE;color:#27500A;border:1px solid #C0DD97" onclick="filtraOfferte('gas')">🔥 Gas</button>
+    <button class="btn" style="font-size:11px;padding:3px 10px;background:#FCEBEB;color:#791F1F;border:1px solid #F7C1C1" onclick="filtraOfferte('tel')">📱 Tel</button>
+    <button class="btn" style="font-size:11px;padding:3px 10px;background:#EEEDFE;color:#26215C;border:1px solid #CECBF6" onclick="filtraOfferte('dual')">⚡🔥 Dual</button>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:#fafafa">
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Tipo</th>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Fornitore</th>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Nome offerta</th>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Prezzo</th>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Azioni</th>
+        </tr>
+      </thead>
+      <tbody id="off_tbody"></tbody>
+    </table>
+    <div id="off_empty" style="text-align:center;padding:2rem;color:#aaa;font-size:12px">Nessuna offerta inserita</div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="document.getElementById('offerteModal').classList.remove('open')">Chiudi</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== MODAL NUOVO/MODIFICA ===== -->
+<div class="modal-bg" id="newModal">
+<div class="modal" style="max-width:680px">
+  <h2 id="modalTitle">Nuovo contratto</h2>
+  <div id="single_form" style="max-height:65vh;overflow-y:auto;padding-right:4px">
+  <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">Anagrafica</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome / Ragione sociale *</label><input id="f_nome" type="text" placeholder="Es. Mario Rossi / Studio ABC SRL"></div>
+      <div class="form-group"><label>Tipo cliente</label>
+        <select id="f_tipo_cliente" onchange="toggleBusiness()">
+          <option value="">-- Seleziona --</option>
+          <option value="residenziale">Residenziale</option>
+          <option value="business">Business</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Cod. Fiscale</label><input id="f_cf" type="text" placeholder="RSSMRA70A01..."></div>
+      <div class="form-group"><label>Telefono</label><input id="f_tel" type="text" placeholder="333 1234567"></div>
+      <div class="form-group"><label>Email</label><input id="f_email" type="email" placeholder="cliente@email.it"></div>
+      <div class="form-group full"><label>Indirizzo di residenza</label><input id="f_residenza" type="text" placeholder="Via Roma 1, 70010 Valenzano (BA)"></div>
+      <div class="form-group"><label>Data di nascita</label><input id="f_data_nascita" type="date"></div>
+      <div class="form-group"><label>Luogo di nascita</label><input id="f_luogo_nascita" type="text" placeholder="Es. Bari (BA)"></div>
+    </div>
+
+    <div id="business_section" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🏢 Dati aziendali</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Partita IVA</label><input id="f_piva" type="text" placeholder="01234567890"></div>
+        <div class="form-group"><label>Codice ATECO</label><input id="f_ateco" type="text" placeholder="Es. 47.11.10"></div>
+        <div class="form-group full"><label>Sede legale</label><input id="f_sede_legale" type="text" placeholder="Via Milano 5, 20100 Milano"></div>
+        <div class="form-group"><label>Legale rappresentante</label><input id="f_legale_rapp" type="text" placeholder="Nome Cognome"></div>
+        <div class="form-group"><label>PEC aziendale</label><input id="f_pec" type="email" placeholder="azienda@pec.it"></div>
+        <div class="form-group"><label>IBAN aziendale</label><input id="f_iban_az" type="text" placeholder="IT60 X054..." style="font-family:monospace"></div>
+        <div class="form-group"><label>Intestatario IBAN aziendale</label><input id="f_iban_az_int" type="text" placeholder="Ragione sociale o nome"></div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🪪 Documento d'identità</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Tipo documento</label>
+        <select id="f_doc_tipo">
+          <option value="">-- Seleziona --</option>
+          <option>Carta d'identità</option><option>Passaporto</option>
+          <option>Patente</option><option>Permesso di soggiorno</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Numero documento</label><input id="f_doc_num" type="text" placeholder="CA00000AA"></div>
+      <div class="form-group"><label>Luogo di emissione</label><input id="f_doc_luogo" type="text" placeholder="Comune di Bari"></div>
+      <div class="form-group"><label>Data emissione</label><input id="f_doc_emissione" type="date"></div>
+      <div class="form-group"><label>Scadenza C.I.</label><input id="f_doc_scadenza" type="date"></div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🏦 Dati bancari personali</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>IBAN</label><input id="f_iban" type="text" placeholder="IT60 X054 2811 1010 0000 0123 456" style="font-family:monospace"></div>
+      <div class="form-group full"><label>Intestatario conto</label><input id="f_iban_int" type="text" placeholder="Es. Mario Rossi (se diverso dal cliente)"></div>
+    </div>
+  <div style="height:1px;background:#e8e8e8;margin:10px 0"></div>
+  <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">Dati contratto</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Tipo servizio *</label>
+        <select id="f_tipo" onchange="toggleExtraContract()">
+          <option value="">-- Seleziona --</option>
+          <option value="luce">⚡ Luce</option><option value="gas">🔥 Gas</option>
+          <option value="tel">📱 Telefonia</option><option value="ass">🛡 Assicurazione</option>
+          <option value="auto">🚗 Noleggio Auto</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Fornitore</label><input id="f_fornitore" type="text" placeholder="Es. Enel, Edison, TIM..."></div>
+      <div class="form-group"><label>Stato pratica</label>
+        <select id="f_stato">
+          <option>Proposta</option><option>In lavorazione</option>
+          <option>Attivo</option><option>Scaduto</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data inizio</label><input id="f_inizio" type="date"></div>
+      <div class="form-group"><label>Data scadenza</label><input id="f_scadenza" type="date"></div>
+      <div class="form-group"><label>Data att. contratto</label><input id="f_data_att_contratto" type="date"></div>
+      <div class="form-group"><label>Data att. fornitura</label><input id="f_data_att_fornitura" type="date"></div>
+      <div class="form-group"><label>Tipo operazione</label>
+        <select id="f_tipo_op" onchange="toggleCatastali()">
+          <option value="">-- Seleziona --</option>
+          <option value="switch">Switch (cambio fornitore)</option>
+          <option value="subentro">Subentro</option>
+          <option value="voltura">Voltura</option>
+          <option value="nuovo">Nuova attivazione</option>
+          <option value="rinnovo">Rinnovo</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Valore mensile (€)</label><input id="f_valore" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>Stato pagamento</label>
+        <select id="f_pagamento_stato">
+          <option value="">-- Seleziona --</option>
+          <option value="pagato">✅ Pagato</option>
+          <option value="ko">❌ Non pagato / KO</option>
+          <option value="parziale">⚠️ Parziale</option>
+          <option value="in-attesa">⏳ In attesa</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CATASTALI per subentro/voltura -->
+    <div id="catastali_section" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🏠 Dati catastali (subentro / voltura)</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Comune</label><input id="f_cat_comune" type="text" placeholder="Es. Bari"></div>
+        <div class="form-group"><label>Foglio</label><input id="f_cat_foglio" type="text" placeholder="Es. 12"></div>
+        <div class="form-group"><label>Particella</label><input id="f_cat_particella" type="text" placeholder="Es. 345"></div>
+        <div class="form-group"><label>Sub</label><input id="f_cat_sub" type="text" placeholder="Es. 1"></div>
+        <div class="form-group"><label>Categoria catastale</label><input id="f_cat_categoria" type="text" placeholder="Es. A/2"></div>
+        <div class="form-group"><label>N° registrazione contratto</label><input id="f_cat_reg" type="text" placeholder="Es. REG-2024-XXXXX"></div>
+      </div>
+    </div>
+
+    <!-- Bolletta e pagamento spostati dentro ogni singolo POD/PDR (tab POD/PDR) -->
+    <div id="extra_luce" style="display:none">
+      <div class="section-title" style="color:#0C447C">⚡ Luce — inserisci i dettagli nel tab POD/PDR per ogni punto di fornitura</div>
+    </div>
+    <div id="extra_gas" style="display:none">
+      <div class="section-title" style="color:#27500A">🔥 Gas — inserisci i dettagli nel tab POD/PDR per ogni punto di fornitura</div>
+    </div>
+
+    <!-- CAMPI TELEFONIA -->
+    <div id="extra_tel" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">📱 Dettagli Telefonia</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Piano / Tariffa</label><input id="f_piano" type="text" placeholder="Es. Fibra 1Gbps + 3 SIM"></div>
+        <div class="form-group"><label>N° contratto operatore</label><input id="f_ncontratto" type="text" placeholder="TIM-2024-XXXXX"></div>
+      </div>
+    </div>
+
+    <!-- CAMPI ASSICURAZIONI -->
+    <div id="extra_ass" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🛡 Dettagli Assicurazione</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Numero polizza</label><input id="f_polizza" type="text" placeholder="GEN-2024-XXXXX"></div>
+        <div class="form-group"><label>Targa veicolo</label><input id="f_targa" type="text" placeholder="AB123CD"></div>
+      </div>
+    </div>
+
+    <!-- CAMPI NOLEGGIO AUTO -->
+    <div id="extra_auto" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">🚗 Dettagli Noleggio Auto</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Targa veicolo</label><input id="f_targa_auto" type="text" placeholder="AB123CD"></div>
+        <div class="form-group"><label>N° contratto noleggio</label><input id="f_nnoleggio" type="text" placeholder="ALD-2024-XXXXX"></div>
+        <div class="form-group full"><label>Piano / Tariffa</label><input id="f_piano_auto" type="text" placeholder="NLT 36 mesi, Fiat Tipo, 20.000 km/anno"></div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">Note contratto</div>
+    <div class="form-grid">
+      <div class="form-group full"><textarea id="f_note" placeholder="Note aggiuntive, condizioni speciali..."></textarea></div>
+    </div>
+  <div style="height:1px;background:#e8e8e8;margin:10px 0"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:12px;color:#888">Aggiungi tutti i punti di fornitura del cliente</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-add-pod" onclick="addPod('pod')">+ Aggiungi POD (Luce)</button>
+        <button class="btn-add-pod" style="background:#EAF3DE;color:#27500A;border-color:#C0DD97" onclick="addPod('pdr')">+ Aggiungi PDR (Gas)</button>
+      </div>
+    </div>
+    <div class="pod-list" id="pod_list"></div>
+    <div id="pod_empty" style="text-align:center;padding:2rem;color:#aaa;font-size:12px">Nessun POD/PDR aggiunto — usa i pulsanti sopra</div>
+  <div style="height:1px;background:#e8e8e8;margin:10px 0"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:12px;color:#888">Traccia beghe, richieste e pratiche aperte con il fornitore</div>
+      <button class="btn-add-bega" onclick="addBega()">+ Nuova pratica</button>
+    </div>
+    <div class="bega-list" id="bega_list"></div>
+    <div id="bega_empty" style="text-align:center;padding:2rem;color:#aaa;font-size:12px">Nessuna pratica aperta</div>
+</div>
+
+  <div class="modal-footer">
+    <button class="btn btn-danger" onclick="closeModal()">Annulla</button>
+    <button class="btn btn-primary" onclick="saveContract()">💾 Salva contratto</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== MODAL DETTAGLIO ===== -->
+<div class="modal-bg" id="detailModal">
+<div class="modal detail-modal">
+  <div class="detail-header" id="d_header"></div>
+  <div id="d_alert"></div>
+  <div id="detail_scroll" style="max-height:65vh;overflow-y:auto;padding-right:4px">
+    <div id="dp0"></div>
+    <div style="height:1px;background:#eee;margin:8px 0" id="dp0_sep"></div>
+    <div id="dp1"></div>
+    <div style="height:1px;background:#eee;margin:8px 0" id="dp1_sep"></div>
+    <div id="dp2"></div>
+    <div style="height:1px;background:#eee;margin:8px 0" id="dp2_sep"></div>
+    <div id="dp3"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger" onclick="deleteContract()">🗑 Elimina</button>
+    <button class="btn btn-secondary" onclick="closeDetail()">Chiudi</button>
+    <button class="btn btn-primary" onclick="editFromDetail()">✏ Modifica</button>
+  </div>
+</div>
+</div>
+
+  <div class="modal-footer" style="flex-wrap:wrap">
+    <button class="btn btn-danger" onclick="deleteContract()">&#128465; Elimina</button>
+    <button class="btn btn-orange" onclick="openPrint()">&#128424; Stampa</button>
+    <button class="btn btn-green" onclick="openMessages()">&#128172; Messaggi</button>
+    <button class="btn" style="background:#E6F1FB;color:#0C447C;border-color:#B5D4F4" onclick="openLettere()">📄 Lettere</button>
+    <button class="btn btn-secondary" onclick="closeDetail()">Chiudi</button>
+    <button class="btn btn-primary" onclick="editFromDetail()">&#9999; Modifica</button>
+  </div>
+</div>
+</div>
+
+
+
+<!-- ===== MODAL RIPRISTINA BACKUP ===== -->
+<div class="modal-bg" id="restoreModal">
+<div class="modal" style="max-width:500px">
+  <h2>&#9851; Ripristina da backup CSV</h2>
+  <div style="font-size:12px;color:#555;margin-bottom:14px;line-height:1.6">
+    Carica un file CSV precedentemente esportato da questo CRM.<br>
+    <span style="color:#791F1F;font-weight:600;font-size:11px">&#9888; Attenzione: i dati attuali verranno sostituiti con quelli del backup.</span>
+  </div>
+
+  <div id="restore_step1">
+    <div style="border:2px dashed #C0DD97;border-radius:8px;padding:24px;text-align:center;cursor:pointer;background:#f9fff9" 
+         onclick="document.getElementById('restore_file_input').click()"
+         ondragover="event.preventDefault();this.style.borderColor='#27500A'"
+         ondragleave="this.style.borderColor='#C0DD97'"
+         ondrop="handleRestoreDrop(event)">
+      <div style="font-size:28px;margin-bottom:8px">&#128190;</div>
+      <div style="font-weight:600;font-size:13px">Clicca o trascina il file CSV di backup</div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">Il file esportato con "Export CSV" da questo CRM</div>
+    </div>
+    <input type="file" id="restore_file_input" accept=".csv,.txt" style="display:none" onchange="handleRestoreSelect(this)">
+  </div>
+
+  <div id="restore_step2" style="display:none">
+    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#27500A">
+      <strong id="restore_file_name"></strong><br>
+      <span id="restore_preview_info"></span>
+    </div>
+    <div style="background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;font-size:12px;color:#633806">
+      &#9888; Verranno importati <strong id="restore_count"></strong> contratti.<br>
+      I dati attuali nel CRM verranno <strong>sostituiti</strong>. Sei sicuro?
+    </div>
+  </div>
+
+  <div id="restore_step3" style="display:none">
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:32px;margin-bottom:8px">&#10003;</div>
+      <div style="font-size:14px;font-weight:700;color:#27500A" id="restore_result_msg"></div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeRestore()">Annulla</button>
+    <button class="btn btn-primary" id="restore_btn" style="display:none;background:#27500A;border-color:#27500A" onclick="eseguiRestore()">&#9851; Ripristina ora</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== MODAL IMPORTA UNIVERSALE ===== -->
+<div class="modal-bg" id="importModal">
+<div class="modal" style="max-width:680px">
+  <h2>⬆ Importa da CSV</h2>
+  <div style="font-size:12px;color:#555;margin-bottom:10px;line-height:1.6">
+    Importa contatti da <strong>qualsiasi file CSV</strong> — Bitrix24, Excel, Google Sheets, altri CRM.<br>
+    <span style="font-size:11px;color:#888">Il file deve avere una riga di intestazione. I campi si abbinano automaticamente o manualmente.</span>
+  </div>
+
+  <!-- STEP 1: carica file -->
+  <div id="import_step1">
+    <div style="border:2px dashed #ddd;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s"
+         id="drop_zone"
+         onclick="document.getElementById('csv_file_input').click()"
+         ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
+         ondragleave="this.style.borderColor='#ddd'"
+         ondrop="handleDrop(event)">
+      <div style="font-size:28px;margin-bottom:8px">📂</div>
+      <div style="font-weight:600;font-size:13px">Clicca o trascina il file CSV qui</div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">Formati supportati: .csv, .txt — separatori: ; , TAB</div>
+    </div>
+    <input type="file" id="csv_file_input" accept=".csv,.txt,.xlsx,.xls" style="display:none" onchange="handleFileSelect(this)">
+  </div>
+
+  <!-- STEP 2: mappa campi -->
+  <div id="import_step2" style="display:none">
+    <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#0C447C">
+      📄 <strong id="import_file_name"></strong> — <span id="import_row_count"></span> righe trovate &nbsp;|&nbsp; Separatore: <span id="import_sep_label"></span>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">
+      Abbina le colonne del tuo file ai campi del CRM
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:8px">
+      I campi riconosciuti automaticamente sono già abbinati. Modifica quelli che vuoi.
+    </div>
+
+    <div style="max-height:320px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px" id="mapping_table"></div>
+
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:11px;font-weight:700;color:#555">Tipo servizio predefinito:</div>
+      <select id="import_tipo_default" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-family:Arial">
+        <option value="luce">⚡ Luce</option><option value="gas">🔥 Gas</option>
+        <option value="tel">📱 Telefonia</option><option value="ass">🛡 Assicurazione</option>
+        <option value="auto">🚗 Noleggio Auto</option>
+      </select>
+      <select id="import_tipo_cliente_default" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-family:Arial">
+        <option value="residenziale">👤 Residenziale</option>
+        <option value="business">🏢 Business</option>
+      </select>
+    </div>
+    <div style="margin-top:8px;padding:7px 10px;background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;font-size:11px;color:#633806">
+      ⚠ I record senza Nome verranno saltati. Duplicati (stesso CF o Nome+Tel) vengono ignorati.
+    </div>
+  </div>
+
+  <!-- STEP 3: risultato -->
+  <div id="import_step3" style="display:none">
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:32px;margin-bottom:8px">✅</div>
+      <div style="font-size:14px;font-weight:700;color:#27500A" id="import_result_msg"></div>
+      <div style="font-size:12px;color:#888;margin-top:4px" id="import_result_sub"></div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="resetImport()">Annulla</button>
+    <button class="btn btn-primary" id="import_btn" style="display:none" onclick="eseguiImport()">⬆ Importa ora</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ===== MODAL LETTERE ===== -->
+<div class="modal-bg" id="lettereModal">
+<div class="modal" style="max-width:680px">
+  <h2 id="lett_title">📄 Genera lettera</h2>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="lett_btn_row"></div>
+  <div id="lett_preview" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:11px;font-weight:700;color:#555" id="lett_label"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="copiaLettera()">📋 Copia</button>
+        <button class="btn btn-green" style="font-size:11px;padding:4px 10px" onclick="stampaLettera()">🖨 Stampa / PDF</button>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="emailLettera()">✉️ Email</button>
+      </div>
+    </div>
+    <textarea id="lett_text" style="width:100%;height:340px;font-size:12px;padding:12px;border:1px solid #ddd;border-radius:8px;font-family:Arial,sans-serif;resize:vertical;line-height:1.7"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:10px;color:#aaa">Puoi modificare il testo — clicca Salva per ricordarlo</div>
+      <button class="btn" style="font-size:11px;padding:3px 10px;background:#EAF3DE;color:#27500A;border:1px solid #C0DD97" onclick="salvaTemplateLett()">💾 Salva modifiche</button>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="document.getElementById('lettereModal').classList.remove('open')">Chiudi</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== MODAL MESSAGGI ===== -->
+<div class="modal-bg" id="msgModal">
+<div class="modal" style="max-width:620px">
+  <h2 id="msg_title">Messaggi</h2>
+  <div style="margin-bottom:12px">
+    <div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Seleziona tipo messaggio</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px" id="msg_btn_row"></div>
+  </div>
+  <div id="msg_preview_wrap" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:11px;font-weight:700;color:#555" id="msg_preview_label"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="copyMsg()">&#128203; Copia</button>
+        <button class="btn btn-green" style="font-size:11px;padding:4px 10px" onclick="sendWA()">&#128172; WhatsApp</button>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="sendEmail()">&#9993;&#65039; Email</button>
+      </div>
+    </div>
+    <textarea id="msg_text" style="width:100%;height:220px;font-size:12px;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:Arial,sans-serif;resize:vertical;line-height:1.6"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:10px;color:#aaa">Puoi modificare il testo — clicca Salva per ricordarlo</div>
+      <button class="btn" style="font-size:11px;padding:3px 10px;background:#EAF3DE;color:#27500A;border:1px solid #C0DD97" onclick="salvaTemplateMsg()">💾 Salva modifiche</button>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="document.getElementById('msgModal').classList.remove('open')">Chiudi</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== MODAL STAMPA ===== -->
+<div class="modal-bg" id="printModal">
+<div class="modal" style="max-width:500px">
+  <h2>&#128424;&#65039; Stampa / Salva PDF</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0">
+    <button class="btn btn-secondary" style="text-align:left;padding:12px 14px;font-size:13px" onclick="printScheda('cliente')">&#128100; Scheda cliente completa</button>
+    <button class="btn btn-secondary" style="text-align:left;padding:12px 14px;font-size:13px" onclick="printScheda('contratto')">&#128203; Riepilogo contratto (1 pagina)</button>
+    <button class="btn btn-secondary" style="text-align:left;padding:12px 14px;font-size:13px" onclick="printScheda('beghe')">&#9888;&#65039; Scheda pratiche aperte</button>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="document.getElementById('printModal').classList.remove('open')">Chiudi</button>
+  </div>
+</div>
+</div>
+
+<div id="print_area" style="display:none"></div>
+
+<style>
+@media print{body>*:not(#print_area){display:none!important}#print_area{display:block!important}}
+.pp{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;max-width:760px;margin:0 auto;padding:24px}
+.pp-hdr{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid #1a1a1a;padding-bottom:10px;margin-bottom:16px}
+.pp-title{font-size:17px;font-weight:700}
+.pp-sub{font-size:11px;color:#555;margin-top:2px}
+.pp-sec{margin-bottom:14px}
+.pp-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#555;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:8px}
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+.pr{display:flex;gap:6px;padding:3px 0;border-bottom:1px dotted #eee}
+.pr .lb{color:#888;min-width:130px;font-size:11px;flex-shrink:0}
+.pr .vl{font-weight:600;font-size:11px;word-break:break-all}
+.pc{border:1px solid #ddd;border-radius:6px;padding:8px 10px;margin-bottom:6px}
+.bc{border:1px solid #FAC775;background:#fff8f0;border-radius:6px;padding:8px 10px;margin-bottom:6px}
+.bc.ch{border-color:#ddd;background:#f9f9f9}
+</style>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyCVqrDWJDLtyGUzPBtvkHOMxBERO4ixKX0",
+  authDomain: "crm-servizi.firebaseapp.com",
+  projectId: "crm-servizi",
+  storageBucket: "crm-servizi.firebasestorage.app",
+  messagingSenderId: "611069430965",
+  appId: "1:611069430965:web:6b1f36552c007c438942fc"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var syncEnabled = true;
+var unsubscribe = null;
+
+// Salva su Firestore
+function saveData() {
+  // salva anche in locale come backup
+  try { localStorage.setItem('crm_servizi_v2', JSON.stringify({data:data, nextId:nextId})); } catch(e){}
+  if (!syncEnabled) return;
+  // salva su Firebase
+  db.collection('crm').doc('data').set({
+    data: data,
+    nextId: nextId,
+    lastUpdate: new Date().toISOString(),
+    lastUser: window._userName || 'utente'
+  }).then(function() {
+    showSyncStatus('ok');
+  }).catch(function(err) {
+    console.error('Sync error:', err);
+    showSyncStatus('err');
+  });
+}
+
+// Carica da Firestore
+function loadData() {
+  showSyncStatus('loading');
+  db.collection('crm').doc('data').get().then(function(doc) {
+    if (doc.exists) {
+      var d = doc.data();
+      data = d.data || [];
+      nextId = d.nextId || 1;
+      console.log('Dati caricati da Firebase:', data.length, 'contratti');
+    } else {
+      // primo accesso - carica da localStorage se disponibile
+      try {
+        var s = localStorage.getItem('crm_servizi_v2');
+        if (s) { var p=JSON.parse(s); data=p.data||[]; nextId=p.nextId||1; }
+      } catch(e) {}
+      if (!data.length) loadDemo();
+    }
+    renderStats();
+    renderTable();
+    showSyncStatus('ok');
+    setTimeout(function(){checkScadenze();addCampanellaBtn();initCustomTemplates();},500);
+    // attiva listener real-time per aggiornamenti collega
+    startRealTimeSync();
+  }).catch(function(err) {
+    console.error('Errore caricamento Firebase:', err);
+    // fallback a localStorage
+    try {
+      var s = localStorage.getItem('crm_servizi_v2');
+      if (s) { var p=JSON.parse(s); data=p.data||[]; nextId=p.nextId||1; }
+    } catch(e) {}
+    if (!data.length) loadDemo();
+    renderStats();
+    renderTable();
+    showSyncStatus('err');
+  });
+}
+
+// Listener real-time — aggiorna automaticamente quando il collega modifica
+function startRealTimeSync() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = db.collection('crm').doc('data').onSnapshot(function(doc) {
+    if (!doc.exists) return;
+    var d = doc.data();
+    // aggiorna solo se i dati sono più recenti e non stiamo modificando noi
+    if (d.lastUser && d.lastUser !== (window._userName||'utente')) {
+      data = d.data || [];
+      nextId = d.nextId || 1;
+      renderStats();
+      renderTable();
+      showToast('Dati aggiornati da ' + d.lastUser + ' ✓');
+    }
+  }, function(err) {
+    console.error('Real-time sync error:', err);
+  });
+}
+
+function showSyncStatus(stato) {
+  var el = document.getElementById('sync_status');
+  if (!el) return;
+  if (stato === 'ok')      { el.innerHTML = '🟢 Sincronizzato'; el.style.color = '#A8D090'; }
+  if (stato === 'loading') { el.innerHTML = '🟡 Caricamento...'; el.style.color = '#DFC980'; }
+  if (stato === 'err')     { el.innerHTML = '🔴 Offline (locale)'; el.style.color = '#E8A090'; }
+}
+
+const TIPOLABEL={luce:'Luce',gas:'Gas',tel:'Telefonia',ass:'Assicurazioni',auto:'Noleggio Auto'};
+const TIPOICON={luce:'⚡',gas:'🔥',tel:'📱',ass:'🛡',auto:'🚗'};
+const TIPOCOLORS={
+  luce:{bg:'#E6F1FB',color:'#0C447C'},gas:{bg:'#EAF3DE',color:'#27500A'},
+  tel:{bg:'#FCEBEB',color:'#791F1F'},ass:{bg:'#FAEEDA',color:'#633806'},auto:{bg:'#EEEDFE',color:'#26215C'}
+};
+const TIPO_OP_LABEL={switch:'Switch',subentro:'Subentro',voltura:'Voltura',nuovo:'Nuova att.',rinnovo:'Rinnovo'};
+const PAG_LABEL={iban:'Dom. IBAN',bollettino:'Bollettino',rid:'RID',altro:'Altro'};
+const BOLL_LABEL={web:'🌐 Web',cartacea:'📄 Cartacea'};
+const PAG_STATO_LABEL={pagato:'✅ Pagato',ko:'❌ KO',parziale:'⚠️ Parziale','in-attesa':'⏳ In attesa'};
+const BEGA_TIPI=['Aumento di potenza','Rateizzazione','Modifica anagrafica','Reclamo bolletta','Voltura in corso','Distacco / Riallaccio','Rimborso credito','Pratica switch bloccata','Altro'];
+
+let data=[];
+let nextId=1;
+let activeTab='all';
+let editingId=null;
+let viewingId=null;
+let tmpPods=[];
+let tmpBegas=[];
+
+
+function daysDiff(s){if(!s)return null;const d=new Date(s),n=new Date();n.setHours(0,0,0,0);d.setHours(0,0,0,0);return Math.round((d-n)/(86400000));}
+function fmtDate(s){if(!s)return '-';return new Date(s).toLocaleDateString('it-IT');}
+function initials(n){const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.substring(0,2).toUpperCase();}
+
+function renderStats(){
+  const el=document.getElementById('stats');
+  const c={luce:0,gas:0,tel:0,ass:0,auto:0};
+  let scad=0,beghe=0,ko=0,attesa=0;
+  data.forEach(r=>{
+    c[r.tipo]++;
+    const d=daysDiff(r.scadenza);if(d!==null&&d>=0&&d<=30)scad++;
+    (r.pods||[]).forEach(p=>{const dp=daysDiff(p.data_scadenza);if(dp!==null&&dp>=0&&dp<=30)scad++;});
+    beghe+=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+    if(r.pagamento_stato==='ko')ko++;
+    if(r.pagamento_stato==='in-attesa')attesa++;
+  });
+  el.innerHTML=`
+    <div class="stat"><div class="stat-label">Totale</div><div class="stat-val" style="color:#1a1a1a">${data.length}</div></div>
+    <div class="stat luce"><div class="stat-label">⚡ Luce</div><div class="stat-val">${c.luce}</div></div>
+    <div class="stat gas"><div class="stat-label">🔥 Gas</div><div class="stat-val">${c.gas}</div></div>
+    <div class="stat tel"><div class="stat-label">📱 Tel.</div><div class="stat-val">${c.tel}</div></div>
+    <div class="stat ass"><div class="stat-label">🛡 Ass.</div><div class="stat-val">${c.ass}</div></div>
+    <div class="stat auto"><div class="stat-label">🚗 Auto</div><div class="stat-val">${c.auto}</div></div>
+    <div class="stat scad"><div class="stat-label">⚠ Scad.30gg</div><div class="stat-val">${scad}</div></div>
+    <div class="stat beghe"><div class="stat-label">🔥 Pratiche</div><div class="stat-val">${beghe}</div></div>
+    <div class="stat" style="background:#FCEBEB"><div class="stat-label" style="color:#791F1F">KO / Non pagati</div><div class="stat-val" style="color:#791F1F">${ko}</div></div>
+    <div class="stat" style="background:#FAEEDA"><div class="stat-label" style="color:#633806">In attesa</div><div class="stat-val" style="color:#633806">${attesa}</div></div>
+  `;
+}
+
+function renderTable(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const fstato=document.getElementById('fstato').value;
+  const fscad=document.getElementById('fscad').value;
+  const ftc=document.getElementById('ftipo_cliente').value;
+  const fbeghe=document.getElementById('fbeghe').value;
+  const fpagamento=document.getElementById('fpagamento').value;
+  const finserito=document.getElementById('finserito').value;
+  // Popola il menu mesi dinamicamente
+  (function(){
+    const sel=document.getElementById('finserito'), cur=sel.value;
+    const mesi=new Set();
+    data.forEach(r=>{ if(r.data_inserimento) mesi.add(r.data_inserimento.slice(0,7)); });
+    sel.innerHTML='<option value="">📅 Tutti i mesi</option>';
+    Array.from(mesi).sort().reverse().forEach(m=>{
+      const [y,mo]=m.split('-');
+      const label=new Date(y,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+      sel.innerHTML+=`<option value="${m}"${cur===m?' selected':''}>${label}</option>`;
+    });
+  })();
+  // beghe tab: show all service types but filter by pratiche
+  const isBegheTab = activeTab==='beghe';
+  let rows=data.filter(r=>{
+    if(!isBegheTab && activeTab!=='all'&&r.tipo!==activeTab)return false;
+    if(fstato&&r.stato!==fstato)return false;
+    if(ftc&&r.tipo_cliente!==ftc)return false;
+    if(fscad){const d=daysDiff(r.scadenza);if(d===null||d<0||d>parseInt(fscad))return false;}
+    if(q){
+      const pods_str=(r.pods||[]).map(p=>[p.codice,p.indirizzo,p.fornitore_uscente,p.fornitore_entrante].join(' ')).join(' ');
+      const bega_str=(r.begas||[]).map(b=>b.tipo+' '+b.fornitore+' '+b.ticket).join(' ');
+      const hay=[r.nome,r.fornitore,r.cf,r.piva||'',r.email,r.targa||'',r.polizza||'',pods_str,bega_str].join(' ').toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    // filtro pratiche dal dropdown
+    if(fbeghe==='aperte'){const ba=(r.begas||[]).filter(b=>b.stato==='aperta').length;if(!ba)return false;}
+    else if(fbeghe==='chiuse'){const bc=(r.begas||[]).filter(b=>b.stato==='chiusa').length;if(!bc)return false;}
+    else if(fbeghe==='qualsiasi'){if(!(r.begas||[]).length)return false;}
+    // tab pratiche: mostra solo chi ha pratiche aperte
+    if(fpagamento&&r.pagamento_stato!==fpagamento)return false;
+    if(finserito&&(!r.data_inserimento||r.data_inserimento.slice(0,7)!==finserito))return false;
+    if(isBegheTab){const ba=(r.begas||[]).filter(b=>b.stato==='aperta').length;if(!ba)return false;}
+    return true;
+  });
+  const tb=document.getElementById('tbody'),emp=document.getElementById('empty');
+  if(!rows.length){tb.innerHTML='';emp.style.display='block';return;}
+  emp.style.display='none';
+  tb.innerHTML=rows.map(r=>{
+    const isBegheTab = activeTab==='beghe';
+    const scadToShow = r.scadenza || (r.pods&&r.pods[0]?r.pods[0].data_scadenza:'');
+    const d=daysDiff(scadToShow);
+    let sc='color:#1a1a1a';
+    if(d!==null&&d>=0&&d<=30)sc='color:#633806;font-weight:700';
+    if(d!==null&&d<0)sc='color:#791F1F;font-weight:700';
+    const sl=r.stato.toLowerCase().replace(/ /g,'-');
+    const ps=r.pagamento_stato||'';
+    const displayFornitore = r.fornitore || (r.pods&&r.pods[0]?(r.pods[0].fornitore_entrante||r.pods[0].fornitore_uscente||''):'-');
+    const displayScadenza = r.scadenza || (r.pods&&r.pods[0]?r.pods[0].data_scadenza:'');
+    const beghe_aperte=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+    const tc_badge=r.tipo_cliente==='business'?`<span style="font-size:9px;background:#2F3D2A;color:#C8E8A8;border-radius:3px;padding:1px 5px;vertical-align:middle">BIZ</span>`:'';
+    // bega summary for pratiche tab
+    const begaList=(r.begas||[]).filter(b=>b.stato==='aperta');
+    const begaSummary = isBegheTab && begaList.length
+      ? begaList.map(b=>`<div style="font-size:10px;color:#633806;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚠ ${b.tipo}${b.ticket?' #'+b.ticket:''}</div>`).join('')
+      : '';
+    return `<tr onclick="openDetail(${r.id})" data-id="${r.id}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-id="${r.id}" onchange="aggiornaSelzione()" style="cursor:pointer"></td>
+      <td title="${r.nome}"><strong>${r.nome}</strong> ${tc_badge}${beghe_aperte?` <span style="font-size:9px;background:#FCEBEB;color:#791F1F;border-radius:10px;padding:1px 5px">${beghe_aperte}⚠</span>`:''}</td>
+      <td>${r.tipo_cliente==='business'?'🏢':'👤'}</td>
+      <td>${(()=>{
+        const hasPod=(r.pods||[]).some(p=>p.tipo==='pod');
+        const hasPdr=(r.pods||[]).some(p=>p.tipo==='pdr');
+        if(hasPod&&hasPdr) return '<span class="badge luce">⚡ Luce</span> <span class="badge gas">🔥 Gas</span>';
+        return '<span class="badge '+r.tipo+'">'+(TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo)+'</span>';
+      })()}</td>
+      <td>${(()=>{
+        const pod=(r.pods||[]).find(p=>p.tipo==='pod');
+        const pdr=(r.pods||[]).find(p=>p.tipo==='pdr');
+        const fPod=pod?(pod.fornitore_entrante||pod.fornitore_uscente||''):'';
+        const fPdr=pdr?(pdr.fornitore_entrante||pdr.fornitore_uscente||''):'';
+        if(fPod&&fPdr&&fPod!==fPdr) return fPod+' / '+fPdr;
+        return fPod||fPdr||r.fornitore||'-';
+      })()}</td>
+      <td><span class="badge ${sl}">${r.stato}</span></td>
+      <td style="${isBegheTab?'':''+sc}">${(()=>{
+        if(isBegheTab) return begaSummary;
+        const pod=(r.pods||[]).find(p=>p.tipo==='pod');
+        const pdr=(r.pods||[]).find(p=>p.tipo==='pdr');
+        const hasDual = pod&&pdr&&pod.data_scadenza&&pdr.data_scadenza;
+        if(hasDual&&pod.data_scadenza!==pdr.data_scadenza){
+          return '<span style="white-space:nowrap">⚡ '+fmtDate(pod.data_scadenza)+'</span><br><span style="white-space:nowrap">🔥 '+fmtDate(pdr.data_scadenza)+'</span>';
+        }
+        if(hasDual&&pod.data_scadenza===pdr.data_scadenza){
+          return '<span style="white-space:nowrap">⚡🔥 '+fmtDate(pod.data_scadenza)+'</span>';
+        }
+        if(pod&&pod.data_scadenza) return '<span style="white-space:nowrap">⚡ '+fmtDate(pod.data_scadenza)+'</span>';
+        if(pdr&&pdr.data_scadenza) return '<span style="white-space:nowrap">🔥 '+fmtDate(pdr.data_scadenza)+'</span>';
+        return fmtDate(scadToShow);
+      })()}</td>
+      <td>${r.valore?'€'+parseFloat(r.valore).toFixed(0):'-'}</td>
+      <td>${ps?`<span class="badge ${ps}">${PAG_STATO_LABEL[ps]||ps}</span>`:'-'}</td>
+      <td style="font-size:11px;color:#aaa">${r.data_inserimento?fmtDate(r.data_inserimento):'-'}</td>
+      <td><button class="btn-mod" onclick="event.stopPropagation();openEdit(${r.id})">✏</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── SELEZIONE MULTIPLA ──
+function aggiornaSelzione() {
+  const chks = document.querySelectorAll('.row-chk');
+  const sel = Array.from(chks).filter(c=>c.checked);
+  const count = sel.length;
+  document.getElementById('sel_count').style.display = count ? 'inline' : 'none';
+  document.getElementById('sel_count').textContent = count + ' selezionat' + (count===1?'o':'i');
+  document.getElementById('btn_del_sel').style.display = count ? 'inline-flex' : 'none';
+  document.getElementById('btn_desel').style.display = count ? 'inline-flex' : 'none';
+  // aggiorna checkbox "seleziona tutti"
+  const chkAll = document.getElementById('chk_all');
+  if(chkAll) chkAll.checked = count > 0 && count === chks.length;
+}
+function selezionaTutti(chk) {
+  document.querySelectorAll('.row-chk').forEach(c=>c.checked=chk.checked);
+  aggiornaSelzione();
+}
+function deselezionaTutti() {
+  document.querySelectorAll('.row-chk').forEach(c=>c.checked=false);
+  const chkAll=document.getElementById('chk_all'); if(chkAll) chkAll.checked=false;
+  aggiornaSelzione();
+}
+async function eliminaSelezionati() {
+  const ids = Array.from(document.querySelectorAll('.row-chk:checked')).map(c=>parseInt(c.getAttribute('data-id')));
+  if(!ids.length) return;
+  if(!confirm(`Eliminare ${ids.length} client${ids.length===1?'e':'i'} selezionat${ids.length===1?'o':'i'}? L'operazione non può essere annullata.`)) return;
+  let ok=0, err=0;
+  for(const id of ids){
+    try {
+      await db.collection('clienti').doc(String(id)).delete();
+      data = data.filter(r=>r.id!==id);
+      ok++;
+    } catch(e){ err++; }
+  }
+  deselezionaTutti();
+  renderStats(); renderTable();
+  showToast(ok+' client'+( ok===1?'e':'i')+' eliminat'+(ok===1?'o':'i')+(err?' ('+err+' errori)':''));
+}
+
+function setTab(t,el){
+  activeTab=t;
+  // aggiorna sidebar nav
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  if(el) el.classList.add('active');
+  // aggiorna titolo topbar
+  const titles={all:'Tutti i contratti',luce:'⚡ Luce',gas:'🔥 Gas',tel:'📱 Telefonia',ass:'🛡 Assicurazioni',auto:'🚗 Noleggio Auto',beghe:'⚠️ Pratiche aperte'};
+  const tb=document.getElementById('topbar_title'); if(tb) tb.textContent=titles[t]||'Contratti';
+  // when switching to beghe tab, auto-set filter to aperte
+  const fb=document.getElementById('fbeghe');
+  if(t==='beghe' && fb.value==='') fb.value='aperte';
+  renderStats();
+  renderTable();
+}
+
+function switchMTab(idx,el){ return; // tabs removed - single form
+  //DISABLED: 
+  document.querySelectorAll('.mtab').forEach((x,i)=>{x.classList.toggle('active',i===idx);document.getElementById('mp'+i).classList.toggle('active',i===idx);});
+}
+function switchDTab(idx,el){ return; // tabs removed
+  //DISABLED: 
+  document.querySelectorAll('.dtab').forEach((x,i)=>{x.classList.toggle('active',i===idx);document.getElementById('dp'+i).classList.toggle('active',i===idx);});
+}
+
+function toggleBusiness(){
+  const v=document.getElementById('f_tipo_cliente').value;
+  document.getElementById('business_section').style.display=v==='business'?'block':'none';
+}
+function toggleExtraContract(){
+  const t=document.getElementById('f_tipo').value;
+  ['luce','gas','tel','ass','auto'].forEach(k=>document.getElementById('extra_'+k).style.display=t===k?'block':'none');
+}
+function toggleCatastali(){
+  const v=document.getElementById('f_tipo_op').value;
+  document.getElementById('catastali_section').style.display=(v==='subentro'||v==='voltura')?'block':'none';
+}
+
+/* ===== POD/PDR ===== */
+function renderPodList(){
+  const el=document.getElementById('pod_list');
+  const emp=document.getElementById('pod_empty');
+  emp.style.display=tmpPods.length?'none':'block';
+  el.innerHTML=tmpPods.map((p,i)=>`
+    <div class="pod-card">
+      <div class="pod-card-header">
+        <span class="pod-card-title">${p.tipo==='pod'?'⚡ POD — Luce':'🔥 PDR — Gas'} #${i+1}</span>
+        <button class="pod-remove" onclick="removePod(${i})">✕ Rimuovi</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Codice ${p.tipo.toUpperCase()}</label>
+          <input type="text" value="${p.codice||''}" placeholder="${p.tipo==='pod'?'IT001E...':'59999...'}" oninput="tmpPods[${i}].codice=this.value">
+        </div>
+        <div class="form-group full"><label>Indirizzo fornitura</label>
+          <input type="text" value="${p.indirizzo||''}" placeholder="Via Roma 1, 70010 Valenzano (BA)" oninput="tmpPods[${i}].indirizzo=this.value">
+        </div>
+        <div class="form-group"><label>Fornitore uscente</label>
+          <input type="text" value="${p.fornitore_uscente||''}" placeholder="Es. Enel, Edison..." oninput="tmpPods[${i}].fornitore_uscente=this.value">
+        </div>
+        <div class="form-group"><label>Fornitore entrante</label>
+          <input type="text" value="${p.fornitore_entrante||''}" placeholder="Es. Acea, Iren..." oninput="tmpPods[${i}].fornitore_entrante=this.value">
+        </div>
+        <div class="form-group"><label>Uso</label>
+          <select onchange="tmpPods[${i}].uso=this.value">
+            <option value="residenziale" ${p.uso==='residenziale'?'selected':''}>Residenziale</option>
+            <option value="non_residenziale" ${p.uso==='non_residenziale'?'selected':''}>Non residenziale</option>
+            <option value="business" ${p.uso==='business'?'selected':''}>Business</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Tipo operazione</label>
+          <select onchange="tmpPods[${i}].tipo_op=this.value;togglePodCatastali(${i},this.value)">
+            <option value="">-- Seleziona --</option>
+            <option value="switch" ${p.tipo_op==='switch'?'selected':''}>Switch</option>
+            <option value="subentro" ${p.tipo_op==='subentro'?'selected':''}>Subentro</option>
+            <option value="voltura" ${p.tipo_op==='voltura'?'selected':''}>Voltura</option>
+            <option value="nuovo" ${p.tipo_op==='nuovo'?'selected':''}>Nuova att.</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Tipo bolletta</label>
+          <select onchange="tmpPods[${i}].bolletta=this.value">
+            <option value="" ${!p.bolletta?'selected':''}>-- Seleziona --</option>
+            <option value="web" ${p.bolletta==='web'?'selected':''}>🌐 Bolletta web</option>
+            <option value="cartacea" ${p.bolletta==='cartacea'?'selected':''}>📄 Bolletta cartacea</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Modalità pagamento</label>
+          <select onchange="tmpPods[${i}].pagamento=this.value">
+            <option value="" ${!p.pagamento?'selected':''}>-- Seleziona --</option>
+            <option value="iban" ${p.pagamento==='iban'?'selected':''}>🏦 Domiciliazione IBAN</option>
+            <option value="bollettino" ${p.pagamento==='bollettino'?'selected':''}>📮 Bollettino postale</option>
+            <option value="rid" ${p.pagamento==='rid'?'selected':''}>🔄 RID bancario</option>
+            <option value="altro" ${p.pagamento==='altro'?'selected':''}>Altro</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Seleziona offerta (oppure scrivi sotto il prezzo manuale)</label>
+          <select onchange="applicaOffertaPod(${i},this.value)" style="font-size:12px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-family:Arial">
+            <option value="">-- Seleziona offerta salvata --</option>
+            ${getOfferteOptions(p.tipo==='pod'?'luce':'gas')}
+          </select>
+        </div>
+        <div class="form-group"><label>Prezzo offerta (manuale)</label>
+          <input type="text" value="${p.prezzo||''}" placeholder="${p.tipo==='pod'?'Es. 0,07 €/kWh':'Es. 0,42 €/mc'}" oninput="tmpPods[${i}].prezzo=this.value" id="pod_prezzo_${i}">
+        </div>
+        <div class="form-group"><label>Nome offerta</label>
+          <input type="text" value="${p.nome_offerta||''}" placeholder="Es. Acea Fix 12M" oninput="tmpPods[${i}].nome_offerta=this.value" id="pod_nomeoff_${i}">
+        </div>
+        <div class="form-group"><label>Durata contratto</label>
+          <select onchange="tmpPods[${i}].durata=this.value">
+            <option value="" ${!p.durata?'selected':''}>-- Seleziona --</option>
+            <option value="12" ${p.durata==='12'?'selected':''}>12 mesi</option>
+            <option value="24" ${p.durata==='24'?'selected':''}>24 mesi</option>
+            <option value="36" ${p.durata==='36'?'selected':''}>36 mesi</option>
+            <option value="indeterminato" ${p.durata==='indeterminato'?'selected':''}>Indeterminato</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Data inizio contratto</label>
+          <input type="date" value="${p.data_inizio||''}" oninput="tmpPods[${i}].data_inizio=this.value;calcolaScadenzaPod(${i})">
+        </div>
+        <div class="form-group"><label>Data scadenza contratto</label>
+          <input type="date" value="${p.data_scadenza||''}" id="pod_scad_${i}" oninput="tmpPods[${i}].data_scadenza=this.value">
+        </div>
+        <div class="form-group"><label>Data attivazione fornitura</label>
+          <input type="date" value="${p.data_attivazione||''}" oninput="tmpPods[${i}].data_attivazione=this.value">
+        </div>
+        ${p.tipo==='pod'?`
+        <div class="form-group"><label>Potenza (kW)</label>
+          <input type="text" value="${p.potenza||''}" placeholder="3.3 / 4.5 / 6" oninput="tmpPods[${i}].potenza=this.value">
+        </div>
+        <div class="form-group"><label>Consumo annuo (kWh)</label>
+          <input type="text" value="${p.consumo||''}" placeholder="2500" oninput="tmpPods[${i}].consumo=this.value">
+        </div>`:`
+        <div class="form-group full"><label>Consumo annuo (mc)</label>
+          <input type="text" value="${p.consumo||''}" placeholder="800" oninput="tmpPods[${i}].consumo=this.value">
+        </div>`}
+        <div class="form-group full" id="pod_cat_${i}" style="display:${(p.tipo_op==='subentro'||p.tipo_op==='voltura')?'flex':'none'}">
+          <label>Dati catastali (foglio/particella/sub/categoria)</label>
+          <input type="text" value="${p.catastali||''}" placeholder="Es. Foglio 12, Part. 345, Sub 1, Cat A/2" oninput="tmpPods[${i}].catastali=this.value">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function calcolaScadenzaPod(i){
+  const p=tmpPods[i];
+  if(!p.data_inizio||!p.durata||p.durata==='indeterminato')return;
+  const d=new Date(p.data_inizio);
+  d.setMonth(d.getMonth()+parseInt(p.durata));
+  const iso=d.toISOString().slice(0,10);
+  p.data_scadenza=iso;
+  const el=document.getElementById('pod_scad_'+i);
+  if(el)el.value=iso;
+}
+function addPod(tipo){tmpPods.push({tipo,codice:'',indirizzo:'',uso:'residenziale',tipo_op:'',potenza:'',consumo:'',catastali:''});renderPodList();}
+function removePod(i){tmpPods.splice(i,1);renderPodList();}
+function togglePodCatastali(i,v){const el=document.getElementById('pod_cat_'+i);if(el)el.style.display=(v==='subentro'||v==='voltura')?'flex':'none';}
+
+/* ===== BEGHE ===== */
+function renderBegaList(){
+  const el=document.getElementById('bega_list');
+  const emp=document.getElementById('bega_empty');
+  emp.style.display=tmpBegas.length?'none':'block';
+  el.innerHTML=tmpBegas.map((b,i)=>`
+    <div class="bega-card ${b.stato==='chiusa'?'chiusa':''}">
+      <div class="bega-header">
+        <span class="bega-tipo">${b.stato==='chiusa'?'✅':'🔥'} ${b.tipo||'Pratica'}</span>
+        <div style="display:flex;gap:4px">
+          <select style="font-size:11px;padding:2px 6px;border:1px solid #ddd;border-radius:4px;font-family:Arial" onchange="tmpBegas[${i}].stato=this.value;renderBegaList()">
+            <option value="aperta" ${b.stato==='aperta'?'selected':''}>🔥 Aperta</option>
+            <option value="chiusa" ${b.stato==='chiusa'?'selected':''}>✅ Chiusa</option>
+          </select>
+          <button class="bega-remove" onclick="removeBega(${i})">✕</button>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Tipo pratica</label>
+          <select onchange="tmpBegas[${i}].tipo=this.value">
+            ${BEGA_TIPI.map(t=>`<option ${b.tipo===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Fornitore coinvolto</label>
+          <input type="text" value="${b.fornitore||''}" placeholder="Es. Enel" oninput="tmpBegas[${i}].fornitore=this.value">
+        </div>
+        <div class="form-group"><label>N° ticket / protocollo</label>
+          <input type="text" value="${b.ticket||''}" placeholder="Es. ENL-2024-12345" oninput="tmpBegas[${i}].ticket=this.value">
+        </div>
+        <div class="form-group"><label>Data apertura</label>
+          <input type="date" value="${b.data_apertura||''}" oninput="tmpBegas[${i}].data_apertura=this.value">
+        </div>
+        <div class="form-group"><label>Data chiusura</label>
+          <input type="date" value="${b.data_chiusura||''}" oninput="tmpBegas[${i}].data_chiusura=this.value">
+        </div>
+        <div class="form-group full"><label>Note / descrizione</label>
+          <textarea style="height:40px" oninput="tmpBegas[${i}].note=this.value">${b.note||''}</textarea>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function addBega(){tmpBegas.push({tipo:BEGA_TIPI[0],stato:'aperta',fornitore:'',ticket:'',data_apertura:'',data_chiusura:'',note:''});renderBegaList();}
+function removeBega(i){tmpBegas.splice(i,1);renderBegaList();}
+
+/* ===== FORM OPEN/CLEAR ===== */
+function clearForm(){
+  const ids=['nome','cf','tel','email','residenza','data_nascita','luogo_nascita','fornitore','inizio','scadenza','data_att_contratto','data_att_fornitura','piva','ateco','sede_legale','legale_rapp','pec','iban_az','iban_az_int',
+    'doc_num','doc_luogo','iban','iban_int','fornitore','prezzo','note',
+    'piano','ncontratto','polizza','targa','targa_auto','nnoleggio','piano_auto',
+    'cat_comune','cat_foglio','cat_particella','cat_sub','cat_categoria','cat_reg'];
+  ids.forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
+  ['tipo_cliente','doc_tipo','tipo','stato','tipo_op','pagamento_stato','bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas']
+    .forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
+  document.getElementById('f_stato').value='Proposta';
+  document.getElementById('f_valore').value='';
+  ['inizio','scadenza','doc_emissione','doc_scadenza','data_att_contratto','data_att_fornitura']
+    .forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
+  toggleBusiness();toggleExtraContract();toggleCatastali();
+  document.getElementById('catastali_section').style.display='none';
+}
+
+function openNew(){
+  // Chiudi altri modal aperti
+  ['detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.classList.remove('open');
+  });
+  editingId=null;
+  document.getElementById('modalTitle').textContent='Nuovo contratto';
+  clearForm();
+  tmpPods=[];tmpBegas=[];
+  renderPodList();renderBegaList();
+  switchMTab(0,document.querySelector('.mtab'));
+  document.getElementById('newModal').classList.add('open');
+}
+
+function openEdit(id){
+  editingId=id;
+  const r=data.find(x=>x.id===id);if(!r)return;
+  document.getElementById('modalTitle').textContent='Modifica — '+r.nome;
+  const sv=(fid,val)=>{const e=document.getElementById('f_'+fid);if(e)e.value=val||'';};
+  sv('nome',r.nome);sv('tipo_cliente',r.tipo_cliente);sv('cf',r.cf);sv('tel',r.tel);sv('email',r.email);sv('residenza',r.residenza);
+  sv('piva',r.piva);sv('ateco',r.ateco);sv('sede_legale',r.sede_legale);sv('legale_rapp',r.legale_rapp);sv('pec',r.pec);sv('iban_az',r.iban_az);sv('iban_az_int',r.iban_az_int);
+  sv('data_nascita',r.data_nascita);sv('luogo_nascita',r.luogo_nascita);
+  sv('doc_tipo',r.doc_tipo);sv('doc_num',r.doc_num);sv('doc_luogo',r.doc_luogo);sv('doc_emissione',r.doc_emissione);sv('doc_scadenza',r.doc_scadenza);
+  sv('iban',r.iban);sv('iban_int',r.iban_int);
+  sv('tipo',r.tipo);sv('fornitore',r.fornitore);sv('stato',r.stato);sv('tipo_op',r.tipo_op);
+  sv('valore',r.valore);sv('prezzo',r.prezzo);sv('inizio',r.inizio);sv('scadenza',r.scadenza);
+  sv('data_att_contratto',r.data_att_contratto);sv('data_att_fornitura',r.data_att_fornitura);
+  sv('pagamento_stato',r.pagamento_stato);sv('note',r.note);
+  sv('bolletta_luce',r.bolletta_luce);sv('pagamento_luce',r.pagamento_luce);
+  sv('bolletta_gas',r.bolletta_gas);sv('pagamento_gas',r.pagamento_gas);
+  sv('piano',r.piano);sv('ncontratto',r.ncontratto);sv('polizza',r.polizza);sv('targa',r.targa);
+  sv('targa_auto',r.targa_auto);sv('nnoleggio',r.nnoleggio);sv('piano_auto',r.piano_auto);
+  sv('cat_comune',r.cat_comune);sv('cat_foglio',r.cat_foglio);sv('cat_particella',r.cat_particella);
+  sv('cat_sub',r.cat_sub);sv('cat_categoria',r.cat_categoria);sv('cat_reg',r.cat_reg);
+  toggleBusiness();toggleExtraContract();toggleCatastali();
+  tmpPods=JSON.parse(JSON.stringify(r.pods||[]));
+  tmpBegas=JSON.parse(JSON.stringify(r.begas||[]));
+  renderPodList();renderBegaList();
+  switchMTab(0,document.querySelector('.mtab'));
+  document.getElementById('newModal').classList.add('open');
+}
+
+function saveContract(){
+  const nome=document.getElementById('f_nome').value.trim();
+  const tipo=document.getElementById('f_tipo').value;
+  if(!nome){alert('Inserire il nome del cliente.');return;}
+  if(!tipo){alert('Selezionare il tipo di servizio (tab Contratto).');return;}
+  const gv=id=>(document.getElementById('f_'+id)||{}).value||'';
+  const obj={
+    nome,tipo,tipo_cliente:gv('tipo_cliente'),cf:gv('cf'),tel:gv('tel'),email:gv('email'),residenza:gv('residenza'),
+    piva:gv('piva'),ateco:gv('ateco'),sede_legale:gv('sede_legale'),legale_rapp:gv('legale_rapp'),pec:gv('pec'),iban_az:gv('iban_az'),iban_az_int:gv('iban_az_int'),
+    data_nascita:gv('data_nascita'),luogo_nascita:gv('luogo_nascita'),
+    doc_tipo:gv('doc_tipo'),doc_num:gv('doc_num'),doc_luogo:gv('doc_luogo'),doc_emissione:gv('doc_emissione'),doc_scadenza:gv('doc_scadenza'),
+    iban:gv('iban'),iban_int:gv('iban_int'),
+    fornitore:gv('fornitore'),stato:gv('stato'),tipo_op:gv('tipo_op'),
+    valore:parseFloat(gv('valore'))||0,prezzo:gv('prezzo'),
+    inizio:gv('inizio'),scadenza:gv('scadenza'),data_att_contratto:gv('data_att_contratto'),data_att_fornitura:gv('data_att_fornitura'),
+    pagamento_stato:gv('pagamento_stato'),note:gv('note'),
+    bolletta_luce:gv('bolletta_luce'),pagamento_luce:gv('pagamento_luce'),
+    bolletta_gas:gv('bolletta_gas'),pagamento_gas:gv('pagamento_gas'),
+    piano:gv('piano'),ncontratto:gv('ncontratto'),polizza:gv('polizza'),targa:gv('targa'),
+    targa_auto:gv('targa_auto'),nnoleggio:gv('nnoleggio'),piano_auto:gv('piano_auto'),
+    cat_comune:gv('cat_comune'),cat_foglio:gv('cat_foglio'),cat_particella:gv('cat_particella'),
+    cat_sub:gv('cat_sub'),cat_categoria:gv('cat_categoria'),cat_reg:gv('cat_reg'),
+    pods:JSON.parse(JSON.stringify(tmpPods)),
+    begas:JSON.parse(JSON.stringify(tmpBegas)),
+  };
+  if(editingId){data[data.findIndex(x=>x.id===editingId)]={...data.find(x=>x.id===editingId),...obj};showToast('Contratto aggiornato ✓');}
+  else{obj.id=nextId++;obj.data_inserimento=new Date().toISOString().split('T')[0];data.push(obj);showToast('Contratto salvato ✓');}
+  saveData();closeModal();renderStats();renderTable();
+}
+
+function closeModal(){document.getElementById('newModal').classList.remove('open');}
+function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
+function editFromDetail(){closeDetail();openEdit(viewingId);}
+
+function openDetail(id){
+  viewingId=id;
+  const r=data.find(x=>x.id===id);if(!r)return;
+  const c=TIPOCOLORS[r.tipo]||{bg:'#eee',color:'#333'};
+  document.getElementById('d_header').innerHTML=`
+    <div class="avatar" style="background:${c.bg};color:${c.color}">${initials(r.nome)}</div>
+    <div>
+      <div style="font-size:15px;font-weight:700">${r.nome} ${r.tipo_cliente==='business'?'<span style="font-size:10px;background:#1a1a1a;color:#fff;border-radius:3px;padding:2px 6px;vertical-align:middle">BUSINESS</span>':''}</div>
+      <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+        <span class="badge ${r.tipo}">${(()=>{
+          const hasPod=(r.pods||[]).some(p=>p.tipo==='pod');
+          const hasPdr=(r.pods||[]).some(p=>p.tipo==='pdr');
+          if(hasPod&&hasPdr) return '⚡ Luce + 🔥 Gas (Dual)';
+          return (TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo);
+        })()}</span>
+        <span class="badge ${(r.stato||'').toLowerCase().replace(/ /g,'-')}">${r.stato}</span>
+        ${r.tipo_op?`<span style="background:#f0f0f0;color:#555;border-radius:10px;font-size:10px;font-weight:700;padding:2px 7px">${TIPO_OP_LABEL[r.tipo_op]||r.tipo_op}</span>`:''}
+        ${r.pagamento_stato?`<span class="badge ${r.pagamento_stato}">${PAG_STATO_LABEL[r.pagamento_stato]}</span>`:''}
+      </div>
+    </div>`;
+  const d=daysDiff(r.scadenza);
+  let al='';
+  if(d!==null&&d<0)al=`<div class="alert-scad">⚠ Scaduto da ${Math.abs(d)} giorni</div>`;
+  else if(d!==null&&d<=30)al=`<div class="alert-warn">⚠ Scadenza tra ${d} giorni</div>`;
+  else if(d!==null)al=`<div class="alert-ok">✓ Attivo — scadenza tra ${d} giorni</div>`;
+  const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+  if(beghe_ap)al+=`<div class="alert-warn">🔥 ${beghe_ap} pratica${beghe_ap>1?'he':''} aperta${beghe_ap>1?'e':''}</div>`;
+  document.getElementById('d_alert').innerHTML=al;
+
+  // TAB 0: CONTRATTO
+  // Leggi dati dal primo POD/PDR come fallback
+  const _pod = (r.pods||[]).find(p=>p.tipo==='pod')||{};
+  const _pdr = (r.pods||[]).find(p=>p.tipo==='pdr')||{};
+  const _forn = r.fornitore || _pod.fornitore_entrante || _pdr.fornitore_entrante || _pod.fornitore_uscente || _pdr.fornitore_uscente || '-';
+  const _prezzo = r.prezzo || _pod.prezzo || _pdr.prezzo || '-';
+  const _inizio = r.inizio || _pod.data_inizio || _pdr.data_inizio || '';
+  const _scadenza = r.scadenza || _pod.data_scadenza || _pdr.data_scadenza || '';
+  const _attContr = r.data_att_contratto || _pod.data_inizio || '';
+  const _attForn = r.data_att_fornitura || _pod.data_attivazione || _pdr.data_attivazione || '';
+  const _bolletta = _pod.bolletta || _pdr.bolletta || '';
+  const _pagMod = _pod.pagamento || _pdr.pagamento || '';
+  let t0=`
+    <div class="detail-row"><span>Fornitore</span><span>${_forn}</span></div>
+    <div class="detail-row"><span>Tipo operazione</span><span>${TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'-'}</span></div>
+    <div class="detail-row"><span>Valore mensile</span><span>${r.valore?'€'+parseFloat(r.valore).toFixed(2):'-'}</span></div>
+    <div class="detail-row"><span>Prezzo offerta</span><span>${_prezzo}</span></div>
+    <div class="detail-row"><span>Stato pagamento</span><span>${PAG_STATO_LABEL[r.pagamento_stato]||'-'}</span></div>
+    <div class="detail-row"><span>Tipo bolletta</span><span>${_bolletta==='web'?'🌐 Web':_bolletta==='cartacea'?'📄 Cartacea':'-'}</span></div>
+    <div class="detail-row"><span>Modalità pagamento</span><span>${{iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro'}[_pagMod]||'-'}</span></div>
+    <div class="detail-row"><span>Data inizio</span><span>${fmtDate(_inizio)}</span></div>
+    <div class="detail-row"><span>Data scadenza</span><span>${fmtDate(_scadenza)}</span></div>
+    <div class="detail-row"><span>Att. contratto</span><span>${fmtDate(_attContr)}</span></div>
+    <div class="detail-row"><span>Att. fornitura</span><span>${fmtDate(_attForn)}</span></div>`;
+  // bolletta e pagamento ora sono per singolo POD/PDR — vedi tab POD/PDR
+  if(r.tipo==='tel')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📱 Telefonia</div>
+    <div class="detail-row"><span>Piano</span><span>${r.piano||'-'}</span></div>
+    <div class="detail-row"><span>N° contratto</span><span>${r.ncontratto||'-'}</span></div></div>`;
+  if(r.tipo==='ass')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🛡 Assicurazione</div>
+    <div class="detail-row"><span>Polizza</span><span>${r.polizza||'-'}</span></div>
+    <div class="detail-row"><span>Targa</span><span>${r.targa||'-'}</span></div></div>`;
+  if(r.tipo==='auto')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🚗 Noleggio Auto</div>
+    <div class="detail-row"><span>Targa</span><span>${r.targa_auto||'-'}</span></div>
+    <div class="detail-row"><span>N° noleggio</span><span>${r.nnoleggio||'-'}</span></div>
+    <div class="detail-row"><span>Piano</span><span>${r.piano_auto||'-'}</span></div></div>`;
+  if(r.cat_comune||r.cat_foglio)t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏠 Dati catastali</div>
+    <div class="detail-row"><span>Comune</span><span>${r.cat_comune||'-'}</span></div>
+    <div class="detail-row"><span>Foglio / Particella / Sub</span><span>${r.cat_foglio||'-'} / ${r.cat_particella||'-'} / ${r.cat_sub||'-'}</span></div>
+    <div class="detail-row"><span>Categoria</span><span>${r.cat_categoria||'-'}</span></div>
+    <div class="detail-row"><span>N° reg. contratto</span><span>${r.cat_reg||'-'}</span></div></div>`;
+  if(r.note)t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Note</div><div style="font-size:12px">${r.note}</div></div>`;
+  document.getElementById('dp0').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📋 Contratto</div>'+t0;
+
+  // TAB 1: CLIENTE
+  let t1=`
+    <div class="detail-row"><span>Tipo cliente</span><span>${r.tipo_cliente==='business'?'🏢 Business':'👤 Residenziale'}</span></div>
+    <div class="detail-row"><span>Cod. Fiscale</span><span style="font-family:monospace">${r.cf||'-'}</span></div>
+    <div class="detail-row"><span>Telefono</span><span>${r.tel||'-'}</span></div>
+    <div class="detail-row"><span>Email</span><span>${r.email||'-'}</span></div>
+    <div class="detail-row"><span>Indirizzo residenza</span><span>${r.residenza||'-'}</span></div>
+    <div class="detail-row"><span>Data di nascita</span><span>${fmtDate(r.data_nascita)}</span></div>
+    <div class="detail-row"><span>Luogo di nascita</span><span>${r.luogo_nascita||'-'}</span></div>`;
+  if(r.tipo_cliente==='business')t1+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏢 Dati aziendali</div>
+    <div class="detail-row"><span>P. IVA</span><span style="font-family:monospace">${r.piva||'-'}</span></div>
+    <div class="detail-row"><span>Codice ATECO</span><span>${r.ateco||'-'}</span></div>
+    <div class="detail-row"><span>Sede legale</span><span>${r.sede_legale||'-'}</span></div>
+    <div class="detail-row"><span>Legale rappresentante</span><span>${r.legale_rapp||'-'}</span></div>
+    <div class="detail-row"><span>PEC</span><span>${r.pec||'-'}</span></div>
+    <div class="detail-row"><span>IBAN aziendale</span><span style="font-family:monospace;font-size:11px">${r.iban_az||'-'}</span></div>
+    <div class="detail-row"><span>Intestatario IBAN az.</span><span>${r.iban_az_int||'-'}</span></div></div>`;
+  t1+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🪪 Documento</div>
+    <div class="detail-row"><span>Tipo</span><span>${r.doc_tipo||'-'}</span></div>
+    <div class="detail-row"><span>Numero</span><span style="font-family:monospace">${r.doc_num||'-'}</span></div>
+    <div class="detail-row"><span>Luogo emissione</span><span>${r.doc_luogo||'-'}</span></div>
+    <div class="detail-row"><span>Data emissione</span><span>${fmtDate(r.doc_emissione)}</span></div>
+    <div class="detail-row"><span>Scadenza C.I.</span><span>${fmtDate(r.doc_scadenza)}</span></div></div>
+  <div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏦 Banca personale</div>
+    <div class="detail-row"><span>IBAN</span><span style="font-family:monospace;font-size:11px">${r.iban||'-'}</span></div>
+    <div class="detail-row"><span>Intestatario</span><span>${r.iban_int||'-'}</span></div></div>`;
+  document.getElementById('dp1').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">👤 Cliente</div>'+t1;
+
+  // TAB 2: POD/PDR
+  const pods=r.pods||[];
+  let t2=pods.length?pods.map((p,i)=>`<div class="pod-detail-card">
+    <div class="pod-detail-title">${p.tipo==='pod'?'⚡ POD — Luce':'🔥 PDR — Gas'} #${i+1}</div>
+    <div class="detail-row"><span>Codice</span><span style="font-family:monospace">${p.codice||'-'}</span></div>
+    <div class="detail-row"><span>Indirizzo fornitura</span><span>${p.indirizzo||'-'}</span></div>
+    <div class="detail-row"><span>Fornitore uscente</span><span>${p.fornitore_uscente||'-'}</span></div>
+    <div class="detail-row"><span>Fornitore entrante</span><span>${p.fornitore_entrante||'-'}</span></div>
+    <div class="detail-row"><span>Uso</span><span>${p.uso==='non_residenziale'?'Non residenziale':p.uso||'-'}</span></div>
+    <div class="detail-row"><span>Tipo operazione</span><span>${TIPO_OP_LABEL[p.tipo_op]||p.tipo_op||'-'}</span></div>
+    <div class="detail-row"><span>Tipo bolletta</span><span>${p.bolletta==='web'?'🌐 Web':p.bolletta==='cartacea'?'📄 Cartacea':'-'}</span></div>
+    <div class="detail-row"><span>Modalità pagamento</span><span>${{iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro'}[p.pagamento]||'-'}</span></div>
+    <div class="detail-row"><span>Nome offerta</span><span>${p.nome_offerta||'-'}</span></div>
+    <div class="detail-row"><span>Prezzo offerta</span><span>${p.prezzo||'-'}</span></div>
+    <div class="detail-row"><span>Durata contratto</span><span>${p.durata?p.durata==='indeterminato'?'Indeterminato':p.durata+' mesi':'-'}</span></div>
+    <div class="detail-row"><span>Data inizio</span><span>${fmtDate(p.data_inizio)}</span></div>
+    <div class="detail-row"><span>Data scadenza</span><span style="${(()=>{const d=daysDiff(p.data_scadenza);return d!==null&&d<=30&&d>=0?'color:#633806;font-weight:700':d!==null&&d<0?'color:#791F1F;font-weight:700':''})()}">${fmtDate(p.data_scadenza)}${(()=>{const d=daysDiff(p.data_scadenza);return d!==null&&d<=30&&d>=0?' ⚠ ('+d+'gg)':d!==null&&d<0?' ❌ scaduto':''})()}</span></div>
+    <div class="detail-row"><span>Data attivazione</span><span>${fmtDate(p.data_attivazione)}</span></div>
+    ${p.tipo==='pod'?`<div class="detail-row"><span>Potenza</span><span>${p.potenza?p.potenza+' kW':'-'}</span></div>
+    <div class="detail-row"><span>Consumo annuo</span><span>${p.consumo?p.consumo+' kWh':'-'}</span></div>`:`
+    <div class="detail-row"><span>Consumo annuo</span><span>${p.consumo?p.consumo+' mc':'-'}</span></div>`}
+    ${p.catastali?`<div class="detail-row"><span>Dati catastali</span><span>${p.catastali}</span></div>`:''}
+  </div>`).join(''):'<div style="text-align:center;padding:1.5rem;color:#aaa;font-size:12px">Nessun POD/PDR registrato</div>';
+  document.getElementById('dp2').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚡ POD / PDR</div>'+t2;
+
+  // TAB 3: BEGHE
+  const begas=r.begas||[];
+  const dtab_beghe=document.getElementById('dtab_beghe');
+  const ba=begas.filter(b=>b.stato==='aperta').length;
+  // dtab_beghe removed - single scroll view
+  let t3=begas.length?begas.map(b=>`<div class="bega-detail-card ${b.stato==='chiusa'?'chiusa':''}">
+    <div class="bega-detail-title">${b.stato==='chiusa'?'✅':'🔥'} ${b.tipo}</div>
+    <div class="detail-row"><span>Stato</span><span>${b.stato==='aperta'?'Aperta':'Chiusa'}</span></div>
+    <div class="detail-row"><span>Fornitore</span><span>${b.fornitore||'-'}</span></div>
+    <div class="detail-row"><span>N° ticket</span><span style="font-family:monospace">${b.ticket||'-'}</span></div>
+    <div class="detail-row"><span>Data apertura</span><span>${fmtDate(b.data_apertura)}</span></div>
+    <div class="detail-row"><span>Data chiusura</span><span>${fmtDate(b.data_chiusura)}</span></div>
+    ${b.note?`<div style="font-size:11px;color:#555;margin-top:4px;padding-top:4px;border-top:1px solid #eee">${b.note}</div>`:''}
+  </div>`).join(''):'<div style="text-align:center;padding:1.5rem;color:#aaa;font-size:12px">Nessuna pratica registrata</div>';
+  document.getElementById('dp3').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚠️ Pratiche</div>'+t3;
+
+  // single scroll - all panels visible
+  // Hide separators for empty panels
+  ['dp0','dp1','dp2','dp3'].forEach(function(pid){
+    var sep = document.getElementById(pid+'_sep');
+    var panel = document.getElementById(pid);
+    if(sep) sep.style.display = (panel&&panel.innerHTML.trim()) ? 'block' : 'none';
+  });
+  // Scroll to top
+  var ds = document.getElementById('detail_scroll');
+  if(ds) ds.scrollTop = 0;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function deleteContract(){
+  const r=data.find(x=>x.id===viewingId);
+  if(!confirm('Eliminare il contratto di '+r.nome+'?'))return;
+  data=data.filter(x=>x.id!==viewingId);
+  saveData();closeDetail();renderStats();renderTable();
+  showToast('Contratto eliminato');
+}
+
+function exportCSV(){
+  const hdr=['ID','Nome','Tipo cliente','CF','P.IVA','ATECO','Sede legale','Legale rapp.','PEC','IBAN az.','Int.IBAN az.',
+    'Tel','Email','Residenza','Doc.tipo','Doc.num','Doc.luogo','Doc.emissione','Doc.scadenza',
+    'IBAN','Int.IBAN','Tipo','Fornitore','Stato','Tipo operazione','Valore','Prezzo',
+    'Inizio','Scadenza','Att.contratto','Att.fornitura','Stato pagamento',
+    'Bolletta luce','Pag.luce','Bolletta gas','Pag.gas',
+    'Piano tel','N.contr.tel','Polizza','Targa ass','Targa auto','N.noleggio','Piano auto',
+    'Cat.comune','Cat.foglio','Cat.particella','Cat.sub','Cat.categoria','Cat.reg',
+    'N.POD/PDR','POD/PDR (codici)','Beghe aperte','Note'];
+  const rows=data.map(r=>{
+    const pods_str=(r.pods||[]).map(p=>`${p.tipo.toUpperCase()}:${p.codice} ${p.indirizzo} Usc:${p.fornitore_uscente||'-'} Entr:${p.fornitore_entrante||'-'} ${p.prezzo||''} ${p.durata||''}mesi Inizio:${p.data_inizio||'-'} Scad:${p.data_scadenza||'-'}`).join(' | ');
+    const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+    return [r.id,r.nome,r.tipo_cliente,r.cf,r.piva||'',r.ateco||'',r.sede_legale||'',r.legale_rapp||'',r.pec||'',r.iban_az||'',r.iban_az_int||'',
+      r.tel,r.email,r.residenza,r.doc_tipo||'',r.doc_num||'',r.doc_luogo||'',r.doc_emissione||'',r.doc_scadenza||'',
+      r.iban||'',r.iban_int||'',TIPOLABEL[r.tipo]||r.tipo,r.fornitore,r.stato,TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'',
+      r.valore,r.prezzo,r.inizio,r.scadenza,r.data_att_contratto||'',r.data_att_fornitura||'',r.pagamento_stato||'',
+      r.bolletta_luce||'',r.pagamento_luce||'',r.bolletta_gas||'',r.pagamento_gas||'',
+      r.piano||'',r.ncontratto||'',r.polizza||'',r.targa||'',r.targa_auto||'',r.nnoleggio||'',r.piano_auto||'',
+      r.cat_comune||'',r.cat_foglio||'',r.cat_particella||'',r.cat_sub||'',r.cat_categoria||'',r.cat_reg||'',
+      (r.pods||[]).length,pods_str,beghe_ap,(r.note||'').replace(/\n/g,' ')
+    ].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(';');
+  });
+  const csv='\uFEFF'+[hdr.join(';'),...rows].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='CRM_Servizi_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(url);showToast('Export CSV scaricato ✓');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+
+
+
+/* ===== RIPRISTINA DA BACKUP CSV ===== */
+var restoreRows = [];
+
+function handleRestoreDrop(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0];
+  if (file) leggiBackup(file);
+}
+function handleRestoreSelect(input) {
+  var file = input.files[0];
+  if (file) leggiBackup(file);
+}
+
+function leggiBackup(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    elaboraBackup(text, file.name);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function elaboraBackup(text, fileName) {
+  var lines = text.split('\n');
+  var nonEmpty = [];
+  for (var i=0; i<lines.length; i++) {
+    var l = lines[i].replace(/\r$/,'');
+    if (l.trim()) nonEmpty.push(l);
+  }
+  if (nonEmpty.length < 2) {
+    alert('File vuoto o non valido.');
+    return;
+  }
+
+  // Parse header row - detect separator
+  var first = nonEmpty[0];
+  var semis = first.split(';').length - 1;
+  var tabs  = first.split('\t').length - 1;
+  var sep   = semis >= tabs ? ';' : '\t';
+
+  function parseRow(line) {
+    var res=[], cur='', inQ=false;
+    for (var i=0; i<line.length; i++) {
+      var c = line[i];
+      if (c==='"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c===sep && !inQ) { res.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    res.push(cur.trim());
+    return res;
+  }
+
+  var headers = parseRow(nonEmpty[0]).map(function(h){ return h.replace(/^"|"$/g,'').trim(); });
+
+  // Verify it's a CRM backup (must have ID, Nome, Tipo columns)
+  var hasNome = headers.indexOf('Nome') >= 0;
+  var hasTipo = headers.indexOf('Tipo') >= 0;
+  if (!hasNome) {
+    alert('Questo non sembra un backup del CRM.\nAssicurati di usare il file esportato con "Export CSV" da questo CRM.');
+    return;
+  }
+
+  restoreRows = [];
+  for (var r=1; r<nonEmpty.length; r++) {
+    var vals = parseRow(nonEmpty[r]);
+    var obj = {};
+    for (var h=0; h<headers.length; h++) {
+      if (headers[h]) obj[headers[h]] = (vals[h]||'').replace(/^"|"$/g,'').trim();
+    }
+    if ((obj['Nome']||'').trim()) restoreRows.push(obj);
+  }
+
+  if (!restoreRows.length) {
+    alert('Nessun record trovato nel file.');
+    return;
+  }
+
+  document.getElementById('restore_step1').style.display = 'none';
+  document.getElementById('restore_step2').style.display = 'block';
+  document.getElementById('restore_btn').style.display = 'inline-block';
+  document.getElementById('restore_file_name').textContent = fileName;
+  document.getElementById('restore_count').textContent = restoreRows.length;
+  document.getElementById('restore_preview_info').textContent =
+    restoreRows.slice(0,3).map(function(r){ return r['Nome']; }).join(', ') +
+    (restoreRows.length > 3 ? ' e altri '+(restoreRows.length-3)+'...' : '');
+}
+
+function eseguiRestore() {
+  if (!restoreRows.length) return;
+  
+  function nd(s) {
+    if (!s) return '';
+    var m = s.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\ d{4})/);
+    if (m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+    return s;
+  }
+
+  var imported = 0;
+  var newData = [];
+  var newNextId = 1;
+
+  restoreRows.forEach(function(row) {
+    var nome = row['Nome'] || '';
+    var tipo = (row['Tipo']||'luce').toLowerCase();
+    // map tipo label back to key
+    var tipoMap = {'luce':'luce','gas':'gas','telefonia':'tel','assicurazioni':'ass','noleggio auto':'auto'};
+    tipo = tipoMap[tipo] || tipo;
+
+    var rec = {
+      id: newNextId++,
+      nome: nome,
+      tipo_cliente: row['Tipo cliente']==='Business' ? 'business' : 'residenziale',
+      cf: row['CF/PIVA'] || '',
+      piva: row['P. IVA'] || '',
+      ateco: row['ATECO'] || '',
+      tel: row['Telefono'] || '',
+      email: row['Email'] || '',
+      residenza: row['Indirizzo residenza'] || '',
+      doc_tipo: row['Doc.tipo'] || '',
+      doc_num: row['Doc.num'] || '',
+      doc_luogo: row['Doc.luogo'] || '',
+      doc_emissione: row['Doc.emissione'] || '',
+      doc_scadenza: row['Doc.scadenza'] || '',
+      iban: row['IBAN'] || '',
+      iban_int: row['Int.IBAN'] || '',
+      fornitore: row['Fornitore'] || '',
+      stato: row['Stato'] || 'Proposta',
+      tipo_op: row['Tipo operazione'] || '',
+      tipo: tipo,
+      valore: parseFloat(row['Valore mensile'])||0,
+      prezzo: row['Prezzo'] || '',
+      inizio: row['Inizio'] || '',
+      scadenza: row['Scadenza'] || '',
+      data_att_contratto: row['Att.contratto'] || '',
+      data_att_fornitura: row['Att.fornitura'] || '',
+      pagamento_stato: row['Stato pagamento'] || '',
+      bolletta_luce: row['Bolletta luce'] || '',
+      pagamento_luce: row['Pag.luce'] || '',
+      bolletta_gas: row['Bolletta gas'] || '',
+      pagamento_gas: row['Pag.gas'] || '',
+      piano: row['Piano tel'] || '',
+      ncontratto: row['N.contr.tel'] || '',
+      polizza: row['Polizza'] || '',
+      targa: row['Targa ass'] || '',
+      targa_auto: row['Targa auto'] || '',
+      nnoleggio: row['N.noleggio'] || '',
+      piano_auto: row['Piano auto'] || '',
+      cat_comune: row['Cat.comune'] || '',
+      cat_foglio: row['Cat.foglio'] || '',
+      cat_particella: row['Cat.particella'] || '',
+      cat_sub: row['Cat.sub'] || '',
+      cat_categoria: row['Cat.categoria'] || '',
+      cat_reg: row['Cat.reg'] || '',
+      note: row['Note'] || '',
+      pods: [],
+      begas: [],
+    };
+
+    // Ricostruisci POD/PDR dal campo testo
+    var podsStr = row['POD/PDR (codici)'] || '';
+    if (podsStr) {
+      var podParts = podsStr.split(' | ');
+      podParts.forEach(function(part) {
+        if (!part.trim()) return;
+        var isPod = part.indexOf('POD:') === 0;
+        var isPdr = part.indexOf('PDR:') === 0;
+        if (isPod || isPdr) {
+          var codPart = part.replace(/^(POD|PDR):/,'');
+          var parenIdx = codPart.indexOf('(');
+          var codice = parenIdx >= 0 ? codPart.slice(0,parenIdx).trim() : codPart.trim();
+          var indirizzo = '';
+          var rest = codPart.slice(parenIdx+1);
+          var closeIdx = rest.indexOf(')');
+          if (closeIdx >= 0) indirizzo = rest.slice(0, closeIdx).trim();
+          // extract fornitore uscente/entrante
+          var fUsc = '', fEntr = '';
+          var uscIdx = rest.indexOf('Usc:');
+          var entrIdx = rest.indexOf('Entr:');
+          if (uscIdx >= 0) fUsc = rest.slice(uscIdx+4, entrIdx >= 0 ? entrIdx : rest.length).trim().replace(/\s.*$/,'');
+          if (entrIdx >= 0) fEntr = rest.slice(entrIdx+5).trim().split(' ')[0];
+          rec.pods.push({
+            tipo: isPod ? 'pod' : 'pdr',
+            codice: codice,
+            indirizzo: indirizzo,
+            fornitore_uscente: fUsc,
+            fornitore_entrante: fEntr,
+            uso: 'residenziale',
+            tipo_op: rec.tipo_op || 'switch',
+            bolletta: isPod ? rec.bolletta_luce : rec.bolletta_gas,
+            pagamento: isPod ? rec.pagamento_luce : rec.pagamento_gas,
+            prezzo: rec.prezzo,
+            potenza: '',
+            consumo: '',
+            durata: '',
+            data_inizio: rec.inizio,
+            data_scadenza: rec.scadenza,
+            data_attivazione: rec.data_att_fornitura,
+            catastali: '',
+          });
+        }
+      });
+    }
+
+    newData.push(rec);
+    imported++;
+  });
+
+  // Replace all data
+  data = newData;
+  nextId = newNextId;
+  saveData();
+  renderStats();
+  renderTable();
+
+  document.getElementById('restore_step2').style.display = 'none';
+  document.getElementById('restore_btn').style.display = 'none';
+  document.getElementById('restore_step3').style.display = 'block';
+  document.getElementById('restore_result_msg').textContent = imported + ' contratti ripristinati con successo!';
+  showToast('Backup ripristinato: '+imported+' contratti ✓');
+}
+
+function closeRestore() {
+  document.getElementById('restoreModal').classList.remove('open');
+  document.getElementById('restore_step1').style.display = 'block';
+  document.getElementById('restore_step2').style.display = 'none';
+  document.getElementById('restore_step3').style.display = 'none';
+  document.getElementById('restore_btn').style.display = 'none';
+  document.getElementById('restore_file_input').value = '';
+  restoreRows = [];
+}
+
+/* ===== IMPORTAZIONE UNIVERSALE CSV ===== */
+var importRows = [];
+var importHeaders = [];
+var importSep = ';';
+
+// Campi del CRM con etichette leggibili
+var CRM_FIELDS = [
+  {key:'_skip',        label:'-- Non importare --'},
+  {key:'nome',         label:'Nome cliente *'},
+  {key:'tipo_cliente', label:'Tipo cliente (residenziale/business)'},
+  {key:'cf',           label:'Codice Fiscale / P.IVA'},
+  {key:'piva',         label:'Partita IVA'},
+  {key:'ateco',        label:'Codice ATECO'},
+  {key:'tel',          label:'Telefono'},
+  {key:'email',        label:'Email'},
+  {key:'residenza',    label:'Indirizzo residenza'},
+  {key:'fornitore',    label:'Fornitore'},
+  {key:'stato',        label:'Stato pratica'},
+  {key:'tipo_op',      label:'Tipo operazione (switch/voltura...)'},
+  {key:'valore',       label:'Valore mensile (€)'},
+  {key:'prezzo',       label:'Prezzo offerta'},
+  {key:'inizio',       label:'Data inizio contratto'},
+  {key:'scadenza',     label:'Data scadenza contratto'},
+  {key:'data_att_contratto', label:'Data attivazione contratto'},
+  {key:'data_att_fornitura', label:'Data attivazione fornitura'},
+  {key:'pagamento_stato', label:'Stato pagamento'},
+  {key:'pod',          label:'Codice POD (luce)'},
+  {key:'pod2',         label:'Codice POD 2 (luce)'},
+  {key:'pdr',          label:'Codice PDR (gas)'},
+  {key:'pdr2',         label:'Codice PDR 2 (gas)'},
+  {key:'indirizzo_fornitura',     label:'Indirizzo fornitura (generico)'},
+  {key:'indirizzo_fornitura_ee',  label:'Indirizzo fornitura EE (luce)'},
+  {key:'indirizzo_fornitura_ee2', label:'Indirizzo fornitura EE 2'},
+  {key:'indirizzo_fornitura_gas', label:'Indirizzo fornitura Gas'},
+  {key:'indirizzo_fornitura_gas2',label:'Indirizzo fornitura Gas 2'},
+  {key:'fornitore_uscente',   label:'Fornitore uscente'},
+  {key:'fornitore_entrante',  label:'Fornitore entrante'},
+  {key:'potenza',      label:'Potenza kW'},
+  {key:'consumo',      label:'Consumo annuo (kWh/mc)'},
+  {key:'bolletta',     label:'Tipo bolletta (web/cartacea)'},
+  {key:'pagamento_mod',label:'Modalità pagamento (iban/bollettino...)'},
+  {key:'piano',        label:'Piano / Tariffa telefonia'},
+  {key:'polizza',      label:'Numero polizza assicurazione'},
+  {key:'targa',        label:'Targa veicolo'},
+  {key:'data_nascita',  label:'Data di nascita'},
+  {key:'luogo_nascita', label:'Luogo di nascita'},
+  {key:'doc_tipo',     label:'Tipo documento identità'},
+  {key:'doc_num',      label:'Numero documento'},
+  {key:'doc_luogo',    label:'Luogo emissione documento'},
+  {key:'doc_emissione',label:'Data emissione documento'},
+  {key:'doc_scadenza', label:'Scadenza documento'},
+  {key:'iban',         label:'IBAN'},
+  {key:'iban_int',     label:'Intestatario IBAN'},
+  {key:'cat_foglio',   label:'Foglio catastale'},
+  {key:'cat_particella',label:'Particella catastale'},
+  {key:'cat_sub',      label:'Subalterno catastale'},
+  {key:'note',         label:'Note'},
+];
+
+// Automap: parole chiave nei nomi colonna -> campo CRM
+// Supporta sia file CRM Salesforce/gestionale che file personalizzati
+var AUTOMAP_RULES = [
+  // ── NOME CLIENTE ── (prima cognome+nome separati, poi campo unico)
+  {field:'nome',        words:['cognome cliente','nome cliente','ragione sociale','nominativo','intestatario contratto','nome','cognome','name','first','surname','last']},
+  // ── CONTATTI ──
+  {field:'tel',         words:['cell','telefon','phone','mobile','tel','gsm','contatto prefer']},
+  {field:'email',       words:['mail','email','e-mail']},
+  // ── ANAGRAFICA ──
+  {field:'cf',          words:['codice fiscale cliente','codice fiscale','c.f.','codice fis','fiscale','cf']},
+  {field:'piva',        words:['partita iva','p.iva','piva','azienda','company']},
+  {field:'ateco',       words:['ateco']},
+  {field:'residenza',   words:['residenza','indirizzo cliente','indirizzo anagrafica','billing','address','via ','città']},
+  {field:'tipo_cliente',words:['tipo cliente','category','categoria','persona fisica','persona giuridica']},
+  // ── DOCUMENTO ──
+  {field:'doc_tipo',    words:['tipo documento','tipo doc']},
+  {field:'doc_num',     words:['numero documento cliente','numero documento','numero doc','n.ro doc','carta d identit','patente','passaporto']},
+  {field:'doc_luogo',   words:['luogo emissione documento','rilasciato da','doc. cliente rilasciato da','ente emissione','motorizzazione']},
+  {field:'doc_scadenza',words:['scadenza documento','scadenza doc','data scadenza doc']},
+  {field:'doc_emissione',words:['data emissione documento','data rilascio','rilascio doc','emissione documento']},
+  // ── NASCITA ──
+  {field:'luogo_nascita',words:['comune di nascita','luogo di nascita','luogo nascita','provincia di nascita','nato a','birthplace']},
+  {field:'data_nascita', words:['data di nascita','data nascita','born','birth date']},
+  {field:'note',        words:['note','commento','comment','info','maggior']},
+  // ── FORNITORE ──
+  {field:'fornitore_uscente', words:['fornitore attuale','fornitore uscente','outgoing','precedente','old supplier']},
+  {field:'fornitore_entrante',words:['nome prodotto','fornitore entrante','nuovo fornitore','incoming','entrante']},
+  {field:'fornitore',   words:['fornitore ee','fornitore gas','fornitore tel','supplier','fornitore']},
+  // ── POD / PDR ──
+  {field:'pod2',         words:['codice pod 2','pod 2','secondo pod','2° pod','pod2']},
+  {field:'pdr2',         words:['codice pdr 2','pdr 2','secondo pdr','2° pdr','pdr2']},
+  {field:'indirizzo_fornitura_ee2', words:['indirizzo fornitura ee 2','indirizzo fornitura luce 2','fornitura ee 2']},
+  {field:'indirizzo_fornitura_gas2',words:['indirizzo fornitura gas 2','fornitura gas 2']},
+  {field:'indirizzo_fornitura_ee',  words:['indirizzo fornitura ee','indirizzo fornitura luce','fornitura ee 1','fornitura luce']},
+  {field:'indirizzo_fornitura_gas', words:['indirizzo fornitura gas','indirizzo fornitura gas 1','fornitura gas 1','fornitura gas']},
+  {field:'indirizzo_fornitura',     words:['indirizzo di fornitura','indirizzo fornitura','indirizzo,']},
+  {field:'consumo_gas',  words:['consumo annuo mc','consumo mc','consumo gas','mc/anno']},
+  {field:'pod',          words:['service point code','codice pod (luce)','codice pod','pod/pdr','pod']},
+  {field:'pdr',          words:['codice pdr (gas)','codice pdr','pdr','matricola gas']},
+  // ── CONTRATTO ──
+  {field:'tipo_op',     words:['tipo integration case','tipo integration','prestazione','switching','switch in','voltura','subentro','tipo operazione','migrazione','formula']},
+  {field:'stato',       words:['stato pdc','stato otp','stato case','stato contratto','avanzamento','fase','stato','status']},
+  {field:'inizio',      words:['data presunta inizio','data firma','data inizio','inizio','start','decorrenza','data conferma']},
+  {field:'scadenza',    words:['scadenza','expiry','fine contratto']},
+  {field:'data_att_contratto', words:['data firma','data creazione','data attivazione contratto']},
+  {field:'data_att_fornitura', words:['data presunta inizio fornitura','data attivazione fornitura','attivazione fornitura']},
+  // ── OFFERTA / PREZZO ──
+  {field:'prezzo',      words:['prezzo','offerta','tariffa','spread','price']},
+  {field:'valore',      words:['valore','importo','canone','rata','mensile','gettone']},
+  // ── PAGAMENTO ──
+  {field:'bolletta',    words:['contract account','canale di invio','bolletta','fattura','invio']},
+  {field:'pagamento_mod',words:['billing profile','modalità di pagamento','modalita di pagamento','scaglione','pagamento','fatturazione','payment']},
+  {field:'pagamento_stato',words:['causa ko','stato pag','ko']},
+  {field:'iban',        words:['iban']},
+  {field:'iban_int',    words:['intestatario iban','titolare iban','delegato']},
+  // ── FORNITURA ──
+  {field:'potenza',     words:['potenza richiesta','potenza','kw','tensione']},
+  {field:'consumo',     words:['consumo']},
+  // ── CATASTO ──
+  {field:'cat_foglio',  words:['foglio']},
+  {field:'cat_particella',words:['particella']},
+  {field:'cat_sub',     words:['subalterno','sub']},
+];
+
+function autoMapColumn(colName) {
+  var low = colName.toLowerCase();
+  for (var i=0; i<AUTOMAP_RULES.length; i++) {
+    var rule = AUTOMAP_RULES[i];
+    for (var w=0; w<rule.words.length; w++) {
+      if (low.indexOf(rule.words[w].toLowerCase()) >= 0) return rule.field;
+    }
+  }
+  return '_skip';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop_zone').style.borderColor='#ddd';
+  var file = e.dataTransfer.files[0];
+  if (file) leggiFile(file);
+}
+function handleFileSelect(input) {
+  var file = input.files[0];
+  if (file) leggiFile(file);
+}
+
+function leggiFile(file) {
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    // Carica SheetJS se non già presente
+    if (typeof XLSX === 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = function(){ leggiXlsx(file); };
+      document.head.appendChild(s);
+    } else {
+      leggiXlsx(file);
+    }
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    elaboraCSV(text, file.name);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function leggiXlsx(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var wb = XLSX.read(e.target.result, {type:'array', raw:false});
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var rawRows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+    // Trova riga intestazione (quella con più colonne non vuote)
+    var headerRow = 0, bestScore = 0;
+    var kw = ['nome','cod','pod','pdr','fiscale','fornitore','service','integration','tipo','data','cliente','billing'];
+    for (var i = 0; i < Math.min(15, rawRows.length); i++) {
+      var row = rawRows[i].map(function(c){ return String(c).toLowerCase(); });
+      var score = kw.filter(function(k){ return row.some(function(c){ return c.indexOf(k)>=0; }); }).length;
+      if (score > bestScore) { bestScore = score; headerRow = i; }
+      if (score >= 4) break;
+    }
+    // Converti in CSV testuale per riusare elaboraCSV
+    var headers = rawRows[headerRow].map(function(c){ return String(c).trim(); });
+    var lines = [headers.join('\t')];
+    for (var r = headerRow+1; r < rawRows.length; r++) {
+      var row = rawRows[r];
+      if (!row.some(function(v){ return v && String(v).trim(); })) continue;
+      lines.push(headers.map(function(_,i){ return String(row[i]||'').trim(); }).join('\t'));
+    }
+    elaboraCSV(lines.join('\n'), file.name);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseCSVLine(line, sep) {
+  var res=[], cur='', inQ=false;
+  for (var i=0; i<line.length; i++) {
+    var c=line[i];
+    if (c==='"') { if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ; }
+    else if (c===sep&&!inQ) { res.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  res.push(cur.trim());
+  return res;
+}
+
+function elaboraCSV(text, fileName) {
+  var lines=[], raw=text.split('\n');
+  for(var i=0;i<raw.length;i++){var l=raw[i].replace(/\r$/,'');if(l.trim())lines.push(l);}
+  if(lines.length<2){alert('File vuoto o senza dati.');return;}
+
+  var first=lines[0];
+  var tabs=first.split('\t').length-1;
+  var semis=first.split(';').length-1;
+  var commas=first.split(',').length-1;
+  importSep = tabs>=semis&&tabs>=commas?'\t':semis>=commas?';':',';
+  var sepLabel = importSep==='\t'?'TAB':importSep==='\t'?'TAB':importSep===';'?'Punto e virgola (;)':'Virgola (,)';
+
+  importHeaders = parseCSVLine(lines[0], importSep).map(function(h){return h.replace(/^"|"$/g,'').trim();});
+  importRows = [];
+  for(var r=1;r<lines.length;r++){
+    var vals=parseCSVLine(lines[r],importSep);
+    var obj={};
+    for(var h=0;h<importHeaders.length;h++){if(importHeaders[h])obj[importHeaders[h]]=(vals[h]||'').replace(/^"|"$/g,'').trim();}
+    importRows.push(obj);
+  }
+
+  document.getElementById('import_step1').style.display='none';
+  document.getElementById('import_step2').style.display='block';
+  document.getElementById('import_btn').style.display='inline-block';
+  document.getElementById('import_file_name').textContent=fileName;
+  document.getElementById('import_row_count').textContent=importRows.length;
+  document.getElementById('import_sep_label').textContent=sepLabel;
+
+  // Build mapping table
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html+='<tr style="background:#f5f5f5"><th style="padding:6px 8px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Colonna nel tuo file</th><th style="padding:6px 8px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Mappa a campo CRM</th><th style="padding:6px 8px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Esempio valore</th></tr>';
+
+  var fieldOpts='';
+  for(var f=0;f<CRM_FIELDS.length;f++){
+    fieldOpts+='<option value="'+CRM_FIELDS[f].key+'">'+CRM_FIELDS[f].label+'</option>';
+  }
+
+  for(var i=0;i<importHeaders.length;i++){
+    var col=importHeaders[i];
+    if(!col) continue;
+    var mapped=autoMapColumn(col);
+    // sample value from first non-empty row
+    var sample='';
+    for(var rr=0;rr<Math.min(5,importRows.length);rr++){
+      if(importRows[rr][col]){sample=importRows[rr][col].slice(0,35);break;}
+    }
+    var isAuto = mapped!=='_skip';
+    html+='<tr style="border-bottom:1px solid #f0f0f0">';
+    html+='<td style="padding:5px 8px;font-weight:'+(isAuto?'600':'400')+';color:'+(isAuto?'#1a1a1a':'#888')+'">'+col+'</td>';
+    html+='<td style="padding:5px 8px"><select data-col="'+col.replace(/"/g,'&quot;')+'" style="font-size:11px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-family:Arial;width:100%;background:'+(isAuto?'#f0fff0':'#fff')+'">';
+    // build options with selected
+    for(var f=0;f<CRM_FIELDS.length;f++){
+      var sel = CRM_FIELDS[f].key===mapped?'selected':'';
+      html+='<option value="'+CRM_FIELDS[f].key+'" '+sel+'>'+CRM_FIELDS[f].label+'</option>';
+    }
+    html+='</select></td>';
+    html+='<td style="padding:5px 8px;font-size:11px;color:#888">'+sample+'</td>';
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('mapping_table').innerHTML=html;
+}
+
+function eseguiImport() {
+  // Leggi la mappatura corrente dai select
+  var mapping={};
+  var selects=document.getElementById('mapping_table').querySelectorAll('select');
+  for(var i=0;i<selects.length;i++){
+    var col=selects[i].getAttribute('data-col');
+    var field=selects[i].value;
+    if(field!=='_skip' && col) mapping[col]=field;
+  }
+
+  var tipoDefault=document.getElementById('import_tipo_default').value;
+  var tipoClienteDefault=document.getElementById('import_tipo_cliente_default').value;
+
+  function getVal(row, field) {
+    for(var col in mapping){ if(mapping[col]===field && row[col]) return row[col].trim(); }
+    return '';
+  }
+  function normalDate(s) {
+    if(!s)return'';
+    var m=s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})/);
+    if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+    var m2=s.match(/^(\d{4})[\/\.\-](\d{2})[\/\.\-](\d{2})/);
+    if(m2)return s.slice(0,10);
+    return s;
+  }
+  function normalStato(s){
+    if(!s)return'Proposta';
+    var sl=s.toLowerCase();
+    if(sl.indexOf('attiv')>=0||sl==='ok')return'Attivo';
+    if(sl.indexOf('ko')>=0||sl.indexOf('scadut')>=0)return'Scaduto';
+    if(sl.indexOf('lavoraz')>=0||sl.indexOf('corso')>=0)return'In lavorazione';
+    return'Proposta';
+  }
+  function normalTipoOp(s){
+    if(!s)return'switch';
+    var sl=s.toLowerCase();
+    if(sl.indexOf('voltura')>=0)return'voltura';
+    if(sl.indexOf('subentro')>=0)return'subentro';
+    if(sl.indexOf('nuova')>=0||sl.indexOf('new')>=0)return'nuovo';
+    if(sl.indexOf('rinnovo')>=0)return'rinnovo';
+    return'switch';
+  }
+
+  var importati=0, saltati=0;
+  importRows.forEach(function(row){
+    var nome=getVal(row,'nome');
+    if(!nome)return saltati++;
+    var tel=getVal(row,'tel');
+    var cf=getVal(row,'cf');
+    // check duplicates
+    var dup=data.find(function(d){
+      return (cf&&d.cf&&d.cf===cf)||(d.nome===nome&&d.tel===tel&&tel);
+    });
+    if(dup)return saltati++;
+
+    var podCod=getVal(row,'pod');
+    var pdrCod=getVal(row,'pdr');
+    var tipo=tipoDefault;
+    if(podCod&&!pdrCod)tipo='luce';
+    else if(pdrCod&&!podCod)tipo='gas';
+    else if(podCod&&pdrCod)tipo='luce';
+
+    var pods=[];
+    function makePod(codice,tipo,indir,cons,pot){
+      return {tipo:tipo,codice:codice,indirizzo:indir,
+        fornitore_uscente:getVal(row,'fornitore_uscente'),fornitore_entrante:getVal(row,'fornitore_entrante'),
+        uso:'residenziale',tipo_op:normalTipoOp(getVal(row,'tipo_op')),
+        bolletta:getVal(row,'bolletta'),pagamento:getVal(row,'pagamento_mod'),
+        prezzo:getVal(row,'prezzo'),potenza:pot||'',consumo:cons||'',durata:'',
+        data_inizio:normalDate(getVal(row,'inizio')),data_scadenza:normalDate(getVal(row,'scadenza')),
+        data_attivazione:normalDate(getVal(row,'data_att_fornitura')),catastali:''};
+    }
+    // POD luce (supporta colonne: Codice POD, Codice POD 2)
+    var podCod2=getVal(row,'pod2')||getVal(row,'pod 2');
+    var pdrCod2=getVal(row,'pdr2')||getVal(row,'pdr 2');
+    var indrEE=getVal(row,'indirizzo_fornitura')||getVal(row,'indirizzo_fornitura_ee');
+    var indrGas=getVal(row,'indirizzo_fornitura_gas')||indrEE;
+    if(podCod){pods.push(makePod(podCod,'pod',indrEE,getVal(row,'consumo'),getVal(row,'potenza')));}
+    if(podCod2){pods.push(makePod(podCod2,'pod',getVal(row,'indirizzo_fornitura_ee2')||'',getVal(row,'potenza2')||'',''));}
+    if(pdrCod){pods.push(makePod(pdrCod,'pdr',indrGas,getVal(row,'consumo_gas')||getVal(row,'consumo'),''));}
+    if(pdrCod2){pods.push(makePod(pdrCod2,'pdr',getVal(row,'indirizzo_fornitura_gas2')||'','',''));}
+
+    var boll = (function(){var b=getVal(row,'bolletta').toLowerCase();return b.indexOf('web')>=0?'web':b.indexOf('cart')>=0?'cartacea':'';})();
+    var pmod = (function(){var p=getVal(row,'pagamento_mod').toLowerCase();return p.indexOf('dom')>=0||p.indexOf('rid')>=0?'domiciliazione':p.indexOf('boll')>=0?'bollettino':p.indexOf('bon')>=0?'bonifico':'';})();
+    var pstat = (function(){var s=getVal(row,'pagamento_stato').toLowerCase();return s.indexOf('ko')>=0?'ko':s.indexOf('parz')>=0?'parziale':s.indexOf('attesa')>=0?'in-attesa':s.indexOf('pagat')>=0?'pagato':'';})();
+    var rec={
+      id:nextId++,nome:nome,tipo:tipo,
+      tipo_cliente:(getVal(row,'tipo_cliente')||tipoClienteDefault).indexOf('bus')>=0?'business':'residenziale',
+      cf:cf,piva:getVal(row,'piva'),ateco:getVal(row,'ateco'),
+      tel:tel,email:getVal(row,'email'),residenza:getVal(row,'residenza'),
+      data_nascita:normalDate(getVal(row,'data_nascita')),
+      luogo_nascita:getVal(row,'luogo_nascita'),
+      doc_tipo:getVal(row,'doc_tipo'),doc_num:getVal(row,'doc_num'),
+      doc_luogo:getVal(row,'doc_luogo'),
+      doc_emissione:normalDate(getVal(row,'doc_emissione')),
+      doc_scadenza:normalDate(getVal(row,'doc_scadenza')),
+      iban:getVal(row,'iban'),iban_int:getVal(row,'iban_int'),
+      fornitore:getVal(row,'fornitore'),
+      fornitore_uscente:getVal(row,'fornitore_uscente'),
+      fornitore_entrante:getVal(row,'fornitore_entrante'),
+      stato:normalStato(getVal(row,'stato')),
+      tipo_op:normalTipoOp(getVal(row,'tipo_op')),
+      valore:parseFloat(getVal(row,'valore'))||0,
+      prezzo:getVal(row,'prezzo'),
+      inizio:normalDate(getVal(row,'inizio')),
+      scadenza:normalDate(getVal(row,'scadenza')),
+      data_att_contratto:normalDate(getVal(row,'data_att_contratto')),
+      data_att_fornitura:normalDate(getVal(row,'data_att_fornitura')),
+      pagamento_stato:pstat,
+      bolletta_luce:boll,pagamento_luce:pmod,
+      bolletta_gas:boll,pagamento_gas:pmod,
+      piano:getVal(row,'piano'),polizza:getVal(row,'polizza'),targa:getVal(row,'targa'),
+      note:getVal(row,'note'),
+      data_inserimento:new Date().toISOString().split('T')[0],
+      pods:pods,begas:[],
+      cat_foglio:getVal(row,'cat_foglio'),cat_particella:getVal(row,'cat_particella'),
+      cat_sub:getVal(row,'cat_sub'),cat_comune:'',cat_categoria:'',cat_reg:'',
+    };
+    data.push(rec);
+    importati++;
+  });
+
+  saveData();renderStats();renderTable();
+  document.getElementById('import_step2').style.display='none';
+  document.getElementById('import_btn').style.display='none';
+  document.getElementById('import_step3').style.display='block';
+  document.getElementById('import_result_msg').textContent=importati+' contatti importati con successo!';
+  document.getElementById('import_result_sub').textContent=saltati?saltati+' record saltati (senza nome o duplicati)':'Nessun duplicato trovato.';
+  showToast('Importati '+importati+' contatti ✓');
+}
+
+function resetImport() {
+  document.getElementById('importModal').classList.remove('open');
+  document.getElementById('import_step1').style.display='block';
+  document.getElementById('import_step2').style.display='none';
+  document.getElementById('import_step3').style.display='none';
+  document.getElementById('import_btn').style.display='none';
+  document.getElementById('csv_file_input').value='';
+  importRows=[];importHeaders=[];
+}
+
+// Click fuori per chiudere i modal
+['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('click',function(e){
+    if(e.target===this){
+      this.classList.remove('open');
+      if(id==='importModal') resetImport();
+      if(id==='restoreModal') closeRestore();
+    }
+  });
+});
+
+// Chiudi modal con tasto ESC
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    ['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.classList.remove('open');
+    });
+  }
+});
+
+// Chiudi tutti i modal all'avvio (sicurezza)
+['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.classList.remove('open');
+});
+
+
+
+/* ===== GESTIONE OFFERTE ===== */
+var offerte = [];
+var offerteFilter = 'tutti';
+
+function loadOfferte() {
+  try {
+    var s = localStorage.getItem('crm_offerte');
+    if (s) offerte = JSON.parse(s);
+  } catch(e) { offerte = []; }
+  // Also sync from Firebase
+  if (typeof db !== 'undefined') {
+    db.collection('crm').doc('offerte').get().then(function(doc) {
+      if (doc.exists && doc.data().offerte) {
+        offerte = doc.data().offerte;
+        localStorage.setItem('crm_offerte', JSON.stringify(offerte));
+      }
+    }).catch(function(){});
+  }
+}
+
+function saveOfferte() {
+  localStorage.setItem('crm_offerte', JSON.stringify(offerte));
+  if (typeof db !== 'undefined') {
+    db.collection('crm').doc('offerte').set({ offerte: offerte })
+      .catch(function(e){ console.error('Offerte sync error:', e); });
+  }
+}
+
+function openOfferte() {
+  renderOfferte();
+  document.getElementById('offerteModal').classList.add('open');
+}
+
+function aggiungiOfferta() {
+  var tipo = document.getElementById('off_tipo').value;
+  var fornitore = document.getElementById('off_fornitore').value.trim();
+  var nome = document.getElementById('off_nome').value.trim();
+  var prezzo = document.getElementById('off_prezzo').value.trim();
+  if (!nome || !prezzo) { alert('Inserire almeno nome offerta e prezzo.'); return; }
+  offerte.push({ id: Date.now(), tipo, fornitore, nome, prezzo, attiva: true });
+  saveOfferte();
+  document.getElementById('off_nome').value = '';
+  document.getElementById('off_prezzo').value = '';
+  renderOfferte();
+  showToast('Offerta aggiunta ✓');
+}
+
+function eliminaOfferta(id) {
+  offerte = offerte.filter(function(o){ return o.id !== id; });
+  saveOfferte();
+  renderOfferte();
+}
+
+function modificaPrezzo(id, nuovoPrezzo) {
+  var o = offerte.find(function(x){ return x.id === id; });
+  if (o) { o.prezzo = nuovoPrezzo; saveOfferte(); }
+}
+
+function filtraOfferte(tipo) {
+  offerteFilter = tipo;
+  renderOfferte();
+}
+
+var TIPO_OFF_LABEL = { luce:'⚡ Luce', gas:'🔥 Gas', tel:'📱 Tel', dual:'⚡🔥 Dual', altro:'Altro' };
+var TIPO_OFF_BG = { luce:'var(--luce-bg)', gas:'var(--gas-bg)', tel:'var(--tel-bg)', dual:'#E8F4FD', altro:'#f0f0f0' };
+var TIPO_OFF_COLOR = { luce:'var(--luce-text)', gas:'var(--gas-text)', tel:'var(--tel-text)', dual:'#0C447C', altro:'#555' };
+
+function renderOfferte() {
+  var filtered = offerteFilter === 'tutti' ? offerte : offerte.filter(function(o){ return o.tipo === offerteFilter; });
+  var tb = document.getElementById('off_tbody');
+  var emp = document.getElementById('off_empty');
+  if (!filtered.length) { tb.innerHTML = ''; emp.style.display = 'block'; return; }
+  emp.style.display = 'none';
+  tb.innerHTML = '';
+  filtered.forEach(function(o) {
+    var oid = o.id;
+    var row = document.createElement('tr');
+    row.style.borderBottom = '1px solid #f0f0f0';
+    row.innerHTML =
+      '<td style="padding:8px 10px"><span style="background:' + (TIPO_OFF_BG[o.tipo]||'#f0f0f0') + ';color:' + (TIPO_OFF_COLOR[o.tipo]||'#555') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + (TIPO_OFF_LABEL[o.tipo]||o.tipo) + '</span></td>' +
+      '<td style="padding:8px 10px;font-weight:600">' + (o.fornitore||'-') + '</td>' +
+      '<td style="padding:8px 10px">' + o.nome + '</td>' +
+      '<td style="padding:8px 10px"><input type="text" value="' + o.prezzo.replace(/"/g,'&quot;') + '" data-id="' + oid + '" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;width:140px;font-family:Arial" class="off-prezzo-input"></td>' +
+      '<td style="padding:8px 10px"><button data-id="' + oid + '" style="background:#FCEBEB;color:#791F1F;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer" class="off-del-btn">✕</button></td>';
+    tb.appendChild(row);
+    row.querySelector('.off-prezzo-input').addEventListener('change', function(){
+      modificaPrezzo(oid, this.value); saveOfferte(); showToast('Prezzo aggiornato ✓');
+    });
+    row.querySelector('.off-del-btn').addEventListener('click', function(){
+      eliminaOfferta(oid);
+    });
+  });
+}
+
+function getOfferteOptions(tipo) {
+  var opts = offerte.filter(function(o){ return o.tipo === tipo || o.tipo === 'dual'; });
+  if (!opts.length) return '<option value="" disabled>Nessuna offerta salvata per questo tipo</option>';
+  return opts.map(function(o){
+    return '<option value="' + o.id + '">' + (o.fornitore?o.fornitore+' — ':'') + o.nome + ' (' + o.prezzo + ')</option>';
+  }).join('');
+}
+
+function applicaOffertaPod(podIdx, offertaId) {
+  if (!offertaId) return;
+  var o = offerte.find(function(x){ return x.id == offertaId; });
+  if (!o) return;
+  tmpPods[podIdx].prezzo = o.prezzo;
+  tmpPods[podIdx].nome_offerta = o.nome;
+  tmpPods[podIdx].fornitore_entrante = tmpPods[podIdx].fornitore_entrante || o.fornitore;
+  // Update the input fields
+  var prezzoEl = document.getElementById('pod_prezzo_' + podIdx);
+  var nomeEl = document.getElementById('pod_nomeoff_' + podIdx);
+  if (prezzoEl) prezzoEl.value = o.prezzo;
+  if (nomeEl) nomeEl.value = o.nome;
+  showToast('Offerta applicata: ' + o.nome);
+}
+
+
+/* ===== CAMPANELLA SCADENZE ===== */
+var customMsgTemplates = {};
+var customLettTemplates = {};
+
+function loadTemplates() {
+  try {
+    var mt = localStorage.getItem('crm_msg_templates');
+    if (mt) customMsgTemplates = JSON.parse(mt);
+    var lt = localStorage.getItem('crm_lett_templates');
+    if (lt) customLettTemplates = JSON.parse(lt);
+  } catch(e) {}
+}
+
+function salvaTemplateMsg() {
+  var key = document.getElementById('msg_preview_label').textContent;
+  var testo = document.getElementById('msg_text').value;
+  customMsgTemplates[key] = testo;
+  localStorage.setItem('crm_msg_templates', JSON.stringify(customMsgTemplates));
+  showToast('Template messaggio salvato ✓');
+}
+
+function salvaTemplateLett() {
+  var key = document.getElementById('lett_label').textContent;
+  var testo = document.getElementById('lett_text').value;
+  customLettTemplates[key] = testo;
+  localStorage.setItem('crm_lett_templates', JSON.stringify(customLettTemplates));
+  showToast('Template lettera salvato ✓');
+}
+
+// Override selectMsg to use custom template if saved
+var _origSelectMsg = null;
+function initCustomTemplates() {
+  _origSelectMsg = selectMsg;
+  selectMsg = function(key, begaIdx) {
+    _origSelectMsg(key, begaIdx);
+    var label = document.getElementById('msg_preview_label').textContent;
+    if (customMsgTemplates[label]) {
+      document.getElementById('msg_text').value = customMsgTemplates[label];
+    }
+  };
+  var _origSelLett = selezionaLettera;
+  selezionaLettera = function(key) {
+    _origSelLett(key);
+    var label = document.getElementById('lett_label').textContent;
+    if (customLettTemplates[label]) {
+      document.getElementById('lett_text').value = customLettTemplates[label];
+    }
+  };
+}
+
+// ── CAMPANELLA SCADENZE ──
+function checkScadenze() {
+  var oggi = new Date(); oggi.setHours(0,0,0,0);
+  var scadenti = [];
+  
+  data.forEach(function(r) {
+    // Controlla scadenza contratto
+    var dates = [r.scadenza];
+    // Controlla scadenze POD/PDR
+    (r.pods||[]).forEach(function(p) { if(p.data_scadenza) dates.push(p.data_scadenza); });
+    
+    dates.forEach(function(dateStr) {
+      if (!dateStr) return;
+      var d = new Date(dateStr); d.setHours(0,0,0,0);
+      var diff = Math.round((d - oggi) / 86400000);
+      if (diff >= 0 && diff <= 7) {
+        scadenti.push({ nome: r.nome, tipo: TIPOLABEL[r.tipo]||r.tipo, scadenza: dateStr, giorni: diff });
+      }
+    });
+  });
+
+  // Remove duplicates
+  var seen = {};
+  scadenti = scadenti.filter(function(s) {
+    var k = s.nome + s.scadenza;
+    if (seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+
+  if (!scadenti.length) return;
+
+  // ── Banner dentro il CRM ──
+  var existing = document.getElementById('scad_banner');
+  if (existing) existing.remove();
+  
+  var banner = document.createElement('div');
+  banner.id = 'scad_banner';
+  banner.style.cssText = 'background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#633806;cursor:pointer';
+  var items = scadenti.slice(0,5).map(function(s) {
+    return '🔔 <strong>' + s.nome + '</strong> (' + s.tipo + ') — scade ' + (s.giorni===0?'<strong>OGGI</strong>':s.giorni===1?'domani':'tra '+s.giorni+' giorni') + ' (' + fmtDate(s.scadenza) + ')';
+  }).join('<br>');
+  banner.innerHTML = '<div style="font-weight:700;margin-bottom:4px">⚠️ Scadenze nei prossimi 7 giorni</div>' + items +
+    (scadenti.length > 5 ? '<br>...e altri ' + (scadenti.length-5) : '') +
+    '<div style="font-size:10px;color:#aaa;margin-top:4px">Clicca per chiudere</div>';
+  banner.onclick = function() { this.remove(); };
+  
+  var main = document.querySelector('.main');
+  if (main) main.insertBefore(banner, main.firstChild);
+
+  // ── Notifica browser ──
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      inviaNotifiche(scadenti);
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(function(perm) {
+        if (perm === 'granted') inviaNotifiche(scadenti);
+      });
+    }
+  }
+}
+
+function inviaNotifiche(scadenti) {
+  // Invia una notifica raggruppata
+  var testo = scadenti.slice(0,3).map(function(s) {
+    return s.nome + ' (' + (s.giorni===0?'OGGI':s.giorni===1?'domani':''+s.giorni+'gg') + ')';
+  }).join(', ');
+  if (scadenti.length > 3) testo += ' e altri ' + (scadenti.length-3);
+  
+  // Check if already notified today
+  var lastNotif = localStorage.getItem('crm_last_notif');
+  var today = new Date().toISOString().slice(0,10);
+  if (lastNotif === today) return; // già notificato oggi
+  
+  new Notification('🔔 CRM Servizi — Scadenze', {
+    body: testo,
+    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>'
+  });
+  localStorage.setItem('crm_last_notif', today);
+}
+
+// Aggiungi campanella in topbar
+function addCampanellaBtn() {
+  var btn = document.createElement('button');
+  btn.id = 'campanella_btn';
+  btn.className = 'btn btn-secondary';
+  btn.style.cssText = 'font-size:16px;padding:5px 10px;position:relative';
+  btn.title = 'Controlla scadenze';
+  btn.innerHTML = '🔔';
+  btn.onclick = function() { checkScadenze(); showToast('Scadenze verificate'); };
+  var topbarRight = document.querySelector('.topbar-right');
+  if (topbarRight) topbarRight.insertBefore(btn, topbarRight.firstChild);
+}
+
+/* ===== LETTERE ===== */
+var lettRecord = null;
+
+const LETTERE = {
+  subentro_voltura: {
+    label: '\uD83C\uDFE0 Subentro / Voltura',
+    tpl: function(r) {
+      var pod = (r.pods||[]).find(function(p){return p.tipo==='pod';})||{};
+      var pdr = (r.pods||[]).find(function(p){return p.tipo==='pdr';})||{};
+      return 'Spett.le ' + (pod.fornitore_entrante||r.fornitore||'[FORNITORE]') + '\n' +
+'Oggetto: Richiesta di ' + (TIPO_OP_LABEL[r.tipo_op]||'Subentro/Voltura') + ' \u2014 ' + r.nome + '\n\n' +
+'Il/La sottoscritto/a ' + r.nome + ',' +
+(r.data_nascita ? ' nato/a il ' + fmtDate(r.data_nascita) : '') +
+(r.luogo_nascita ? ' a ' + r.luogo_nascita : '') +
+', residente in ' + (r.residenza||'[INDIRIZZO]') + ',\n' +
+'Codice Fiscale: ' + (r.cf||'[C.F.]') + ',\n' +
+'richiede la ' + (TIPO_OP_LABEL[r.tipo_op]||'voltura') + ' della fornitura presso:\n' +
+'Indirizzo fornitura: ' + (pod.indirizzo||pdr.indirizzo||'[INDIRIZZO FORNITURA]') + '\n' +
+(pod.codice ? 'Codice POD: ' + pod.codice + '\n' : '') +
+(pdr.codice ? 'Codice PDR: ' + pdr.codice + '\n' : '') +
+'\nDati catastali:\n' +
+'Comune: ' + (r.cat_comune||'[COMUNE]') + '\n' +
+'Foglio: ' + (r.cat_foglio||'[FOGLIO]') + ' \u2014 Particella: ' + (r.cat_particella||'[PARTICELLA]') + ' \u2014 Sub: ' + (r.cat_sub||'[SUB]') + '\n' +
+'Categoria catastale: ' + (r.cat_categoria||'[CATEGORIA]') + '\n' +
+(r.cat_reg ? 'N. Registrazione: ' + r.cat_reg + '\n' : '') +
+'\nDocumento: ' + (r.doc_tipo||'[TIPO DOC]') + ' n. ' + (r.doc_num||'[N. DOC]') + ' rilasciato da ' + (r.doc_luogo||'[ENTE]') + ' il ' + fmtDate(r.doc_emissione) + '\n' +
+'\nPagamento: ' + ({iban:'Domiciliazione IBAN: ' + (r.iban||'[IBAN]'), bollettino:'Bollettino postale', rid:'RID bancario'}[pod.pagamento||pdr.pagamento]||'[PAGAMENTO]') + '\n' +
+'Intestatario: ' + (r.iban_int||r.nome) + '\n\nIn fede,' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  },
+  disdetta: {
+    label: '\uD83D\uDCEE Disdetta fornitore uscente',
+    tpl: function(r) {
+      var pod = (r.pods||[]).find(function(p){return p.tipo==='pod';})||{};
+      var pdr = (r.pods||[]).find(function(p){return p.tipo==='pdr';})||{};
+      var fu = pod.fornitore_uscente||pdr.fornitore_uscente||'[FORNITORE USCENTE]';
+      return 'Spett.le ' + fu + '\n' +
+'Oggetto: Disdetta contratto fornitura \u2014 ' + r.nome + '\n\n' +
+'Il/La sottoscritto/a ' + r.nome + ',' +
+(r.data_nascita ? ' nato/a il ' + fmtDate(r.data_nascita) : '') +
+(r.luogo_nascita ? ' a ' + r.luogo_nascita : '') +
+', C.F. ' + (r.cf||'[C.F.]') + ',\n' +
+'residente in ' + (r.residenza||'[INDIRIZZO]') + ',\n\n' +
+'comunica la disdetta del contratto di fornitura ' + (TIPOLABEL[r.tipo]||r.tipo) + ' presso:\n' +
+(pod.codice ? 'POD: ' + pod.codice + '\n' : '') +
+(pdr.codice ? 'PDR: ' + pdr.codice + '\n' : '') +
+'Indirizzo: ' + (pod.indirizzo||pdr.indirizzo||'[INDIRIZZO]') + '\n\n' +
+'La disdetta avr\u00e0 effetto dal ' + fmtDate(pod.data_scadenza||pdr.data_scadenza||r.scadenza) + '.\n' +
+'Si richiede conferma scritta della presa in carico.\n\nIn fede,' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  },
+  ripensamento: {
+    label: '\u21A9 Disdetta per ripensamento',
+    tpl: function(r) {
+      var pod = (r.pods||[]).find(function(p){return p.tipo==='pod';})||{};
+      var pdr = (r.pods||[]).find(function(p){return p.tipo==='pdr';})||{};
+      return 'Spett.le ' + (pod.fornitore_entrante||r.fornitore||'[FORNITORE]') + '\n' +
+'Oggetto: Esercizio diritto di ripensamento \u2014 ' + r.nome + '\n\n' +
+'Il/La sottoscritto/a ' + r.nome + ',' +
+(r.data_nascita ? ' nato/a il ' + fmtDate(r.data_nascita) : '') +
+(r.luogo_nascita ? ' a ' + r.luogo_nascita : '') +
+', C.F. ' + (r.cf||'[C.F.]') + ',\n' +
+'residente in ' + (r.residenza||'[INDIRIZZO]') + ',\n\n' +
+'in riferimento al contratto ' + (TIPOLABEL[r.tipo]||r.tipo) + ' sottoscritto il ' + fmtDate(r.inizio||pod.data_inizio) + ',\n' +
+'esercita il diritto di RIPENSAMENTO ai sensi del D.Lgs. 206/2005 art. 52,\n' +
+'richiedendo il recesso senza penali n\u00e9 costi aggiuntivi.\n\n' +
+(pod.codice ? 'POD: ' + pod.codice + '\n' : '') +
+(pdr.codice ? 'PDR: ' + pdr.codice + '\n' : '') +
+'Indirizzo: ' + (pod.indirizzo||pdr.indirizzo||'[INDIRIZZO]') + '\n\n' +
+'Si richiede conferma entro 5 giorni lavorativi.\n\nIn fede,' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  },
+  proposta: {
+    label: '\uD83D\uDCCB Proposta contratto',
+    tpl: function(r) {
+      var pod = (r.pods||[]).find(function(p){return p.tipo==='pod';})||{};
+      var pdr = (r.pods||[]).find(function(p){return p.tipo==='pdr';})||{};
+      var prezzo = pod.prezzo||pdr.prezzo||r.prezzo||'[PREZZO]';
+      return 'Gentile ' + r.nome + ',\n\n' +
+'siamo lieti di presentarLe la nostra proposta per la fornitura di ' + (TIPOLABEL[r.tipo]||r.tipo) + '.\n\n' +
+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n' +
+'PROPOSTA OFFERTA\n' +
+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n' +
+'Fornitore: ' + (pod.fornitore_entrante||r.fornitore||'[FORNITORE]') + '\n' +
+'Tipo offerta: ' + (TIPO_OP_LABEL[r.tipo_op]||'[TIPO]') + '\n' +
+'Prezzo: ' + prezzo + '\n' +
+'Valore mensile: ' + (r.valore ? '\u20ac ' + r.valore : '[IMPORTO]') + '\n' +
+'Durata: ' + ((pod.durata||pdr.durata) ? (pod.durata||pdr.durata) + ' mesi' : '[DURATA]') + '\n' +
+'Bolletta: ' + ({web:'Elettronica', cartacea:'Cartacea'}[pod.bolletta||pdr.bolletta]||'[BOLLETTA]') + '\n' +
+'Pagamento: ' + ({iban:'Domiciliazione IBAN', bollettino:'Bollettino postale', rid:'RID bancario'}[pod.pagamento||pdr.pagamento]||'[PAGAMENTO]') + '\n' +
+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n' +
+(pod.codice ? 'POD: ' + pod.codice + '\n' : '') +
+(pdr.codice ? 'PDR: ' + pdr.codice + '\n' : '') +
+'Indirizzo: ' + (pod.indirizzo||pdr.indirizzo||r.residenza||'[INDIRIZZO]') + '\n\n' +
+'Per procedere contattarci o firmare la presente proposta.\n\nDistinti saluti,' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  },
+  delega: {
+    label: '\u270D Lettera delega alla firma',
+    tpl: function(r) {
+      return 'DELEGA ALLA FIRMA\n\n' +
+'Il/La sottoscritto/a ' + r.nome + ',' +
+(r.data_nascita ? '\nnato/a il ' + fmtDate(r.data_nascita) : '') +
+(r.luogo_nascita ? ' a ' + r.luogo_nascita : '') +
+',\nresidente in ' + (r.residenza||'[INDIRIZZO]') +
+',\nC.F.: ' + (r.cf||'[C.F.]') +
+',\nDoc.: ' + (r.doc_tipo||'[TIPO DOC]') + ' n. ' + (r.doc_num||'[N. DOC]') +
+'\n\nDELEGA\n\n' +
+'il/la Sig./Sig.ra [NOME DELEGATO],\n' +
+'nato/a il [DATA] a [LUOGO],\nC.F. [CF DELEGATO],\nDoc. [TIPO] n. [N.]\n\n' +
+'a sottoscrivere in suo nome il contratto di fornitura ' + (TIPOLABEL[r.tipo]||r.tipo) +
+' con ' + (r.fornitore||'[FORNITORE]') + '\n' +
+'presso: ' + ((r.pods||[])[0] ? r.pods[0].indirizzo : r.residenza||'[INDIRIZZO]') + '\n\n' +
+'Data: ___/___/_______\n\n' +
+'Firma delegante: _______________________\n' +
+'Firma delegato:  _______________________\n\n' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  },
+  rateizzazione: {
+    label: '\uD83D\uDCB0 Rateizzazione / Reclamo',
+    tpl: function(r) {
+      var bega = (r.begas||[]).find(function(b){return b.stato==='aperta';})||{};
+      return 'Spett.le ' + (bega.fornitore||r.fornitore||'[FORNITORE]') + '\n' +
+'Oggetto: Richiesta rateizzazione / Reclamo \u2014 ' + r.nome + '\n\n' +
+'Il/La sottoscritto/a ' + r.nome + ',' +
+(r.data_nascita ? ' nato/a il ' + fmtDate(r.data_nascita) : '') +
+(r.luogo_nascita ? ' a ' + r.luogo_nascita : '') +
+', C.F. ' + (r.cf||'[C.F.]') + ',\n' +
+'residente in ' + (r.residenza||'[INDIRIZZO]') + ',' +
+(bega.ticket ? '\nN. pratica: ' + bega.ticket + ',' : '') +
+'\n\nrichiede la RATEIZZAZIONE della bolletta n. [NUMERO FATTURA]\n' +
+'importo \u20ac [IMPORTO] del [DATA FATTURA]\n' +
+'fornitura ' + (TIPOLABEL[r.tipo]||r.tipo) + '.\n\n' +
+'Motivazione: [INSERIRE MOTIVAZIONE]\n\n' +
+'Si richiede risposta entro 40 giorni (delibera ARERA).\n\nIn fede,' + '\n\nCordiali saluti,\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nGruppo tu.telati\nEmanuele e Carmen\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+    }
+  }
+};
+
+function openLettere() {
+  var r = data.find(function(x){return x.id===viewingId;});
+  if (!r) return;
+  lettRecord = r;
+  document.getElementById('lett_title').textContent = '\uD83D\uDCC4 Lettere \u2014 ' + r.nome;
+  document.getElementById('lett_preview').style.display = 'none';
+  var row = document.getElementById('lett_btn_row');
+  row.innerHTML = Object.keys(LETTERE).map(function(k){
+    return '<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;margin-bottom:4px" onclick="selezionaLettera(\'' + k + '\')">'+LETTERE[k].label+'</button>';
+  }).join('');
+  document.getElementById('lettereModal').classList.add('open');
+}
+
+function selezionaLettera(key) {
+  var r = lettRecord;
+  var lett = LETTERE[key];
+  if (!lett) return;
+  document.getElementById('lett_label').textContent = lett.label;
+  document.getElementById('lett_text').value = lett.tpl(r);
+  document.getElementById('lett_preview').style.display = 'block';
+}
+
+function copiaLettera() {
+  var t = document.getElementById('lett_text').value;
+  navigator.clipboard.writeText(t).then(function(){ showToast('Lettera copiata \u2713'); }).catch(function(){
+    document.getElementById('lett_text').select();
+    document.execCommand('copy');
+    showToast('Lettera copiata \u2713');
+  });
+}
+
+function stampaLettera() {
+  var testo = document.getElementById('lett_text').value;
+  var html = '<html><head><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.8;margin:50px 60px;color:#1a1a1a}pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:13px}</style></head><body><pre>' + testo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div><!-- /page-wrap -->
+</body></html>';
+  var win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){win.print();},300);
+}
+
+function emailLettera() {
+  var lines = document.getElementById('lett_text').value.split('\n');
+  var subj = '';
+  for(var i=0;i<lines.length;i++){if(lines[i].indexOf('Oggetto:')>=0){subj=lines[i].replace('Oggetto:','').trim();break;}}
+  if(!subj) subj = 'Comunicazione \u2014 ' + (lettRecord.nome||'');
+  var body = document.getElementById('lett_text').value;
+  var email = lettRecord.email||lettRecord.pec||'';
+  window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+}
+
+
+/* ===== MESSAGGI & STAMPA ===== */
+let msgRecord = null;
+let msgBegaIdx = -1;
+
+const MSGS = {
+  rinnovo_wa: {
+    label: '📱 Avviso scadenza (WhatsApp)',
+    tpl: function(r) {
+      const d = daysDiff(r.scadenza);
+      const gg = d !== null ? d : '?';
+      return 'Buongiorno ' + r.nome + ',\n\nLe scriviamo per informarLa che il Suo contratto *' + (TIPOLABEL[r.tipo]||r.tipo) + '* con *' + (r.fornitore||'il fornitore attuale') + '* è in scadenza tra *' + gg + ' giorni* (' + fmtDate(r.scadenza) + ').\n\nÈ il momento giusto per valutare le migliori offerte disponibili.\n\nLa contatteremo presto, oppure ci chiami al più presto per non perdere questa opportunità.\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  rinnovo_email: {
+    label: '✉️ Proposta rinnovo (Email)',
+    tpl: function(r) {
+      return 'Oggetto: Proposta di rinnovo contratto ' + (TIPOLABEL[r.tipo]||r.tipo) + ' — ' + r.nome + '\n\nGentile ' + r.nome + ',\n\ncome da nostri accordi, Le inviamo una proposta per il rinnovo del Suo contratto ' + (TIPOLABEL[r.tipo]||r.tipo) + ' in scadenza il ' + fmtDate(r.scadenza) + '.\n\nAbbiamo selezionato per Lei la migliore offerta disponibile:\n\n• Fornitore: [NUOVO FORNITORE]\n• Prezzo: [PREZZO OFFERTA]\n• Durata contratto: [DURATA]\n• Modalità pagamento: [PAGAMENTO]\n\nPer procedere contattarci entro il [DATA LIMITE].\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  rinnovo_ok: {
+    label: '✅ Conferma rinnovo completato',
+    tpl: function(r) {
+      return 'Buongiorno ' + r.nome + ',\n\nSiamo lieti di comunicarLe che il rinnovo del Suo contratto *' + (TIPOLABEL[r.tipo]||r.tipo) + '* con *' + (r.fornitore||'il nuovo fornitore') + '* è stato completato con successo.\n\n📋 Riepilogo:\n• Fornitore: ' + (r.fornitore||'-') + '\n• Offerta: ' + (r.prezzo||'-') + '\n• Scadenza: ' + fmtDate(r.scadenza) + '\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  rinnovo_invito: {
+    label: '📣 Invito a contattarci (WhatsApp)',
+    tpl: function(r) {
+      return 'Buongiorno ' + r.nome + '!\n\nSapevi che potresti *risparmiare* sul tuo contratto ' + (TIPOLABEL[r.tipo]||r.tipo) + '?\n\nAbbiamo nuove offerte vantaggiose disponibili!\n\nContattaci ora per una consulenza gratuita e senza impegno 😊\n\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  bega_presa: {
+    label: '🔔 Pratica presa in carico',
+    tpl: function(r, b) {
+      return 'Buongiorno ' + r.nome + ',\n\nLe confermiamo che la Sua segnalazione riguardante *' + (b ? b.tipo : '[tipo pratica]') + '* con *' + (b ? (b.fornitore||r.fornitore||'-') : r.fornitore||'-') + '* è stata presa in carico.\n\n🔖 Numero pratica: ' + (b ? (b.ticket||'[in assegnazione]') : '-') + '\n📅 Data apertura: ' + (b ? fmtDate(b.data_apertura) : fmtDate(new Date().toISOString().slice(0,10))) + '\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  bega_evasa: {
+    label: '✅ Pratica evasa / buon fine',
+    tpl: function(r, b) {
+      return 'Buongiorno ' + r.nome + ',\n\nSiamo lieti di comunicarLe che la pratica *' + (b ? b.tipo : '[tipo pratica]') + '* con *' + (b ? (b.fornitore||r.fornitore||'-') : r.fornitore||'-') + '* è stata *risolta con successo*.\n\n🔖 N. pratica: ' + (b ? (b.ticket||'-') : '-') + '\n📅 Chiusa il: ' + (b && b.data_chiusura ? fmtDate(b.data_chiusura) : fmtDate(new Date().toISOString().slice(0,10))) + '\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  bega_aggiornamento: {
+    label: '🔄 Aggiornamento stato pratica',
+    tpl: function(r, b) {
+      return 'Buongiorno ' + r.nome + ',\n\nLa aggiorniamo sullo stato della pratica *' + (b ? b.tipo : '[tipo pratica]') + '* (ticket: ' + (b ? (b.ticket||'-') : '-') + ').\n\n📌 Stato attuale: [INSERIRE AGGIORNAMENTO]\n\nPrevediamo risoluzione entro [DATA STIMATA].\n\nCordiali saluti\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  },
+  bega_documenti: {
+    label: '📎 Richiesta documenti',
+    tpl: function(r, b) {
+      return 'Buongiorno ' + r.nome + ',\n\nIn riferimento alla pratica *' + (b ? b.tipo : '[tipo pratica]') + '*, per procedere abbiamo bisogno dei seguenti documenti:\n\n• [DOCUMENTO 1]\n• [DOCUMENTO 2]\n• [DOCUMENTO 3]\n\nInviarci la documentazione entro [DATA LIMITE] a:\n[EMAIL] oppure WhatsApp [TELEFONO]\n\nGrazie per la collaborazione.\nGruppo tu.telati — Emanuele e Carmen';
+    }
+  }
+};
+
+function openMessages(begaIdx) {
+  const r = data.find(x => x.id === viewingId);
+  if (!r) return;
+  msgRecord = r;
+  msgBegaIdx = begaIdx !== undefined ? begaIdx : -1;
+  document.getElementById('msg_title').textContent = 'Messaggi — ' + r.nome;
+  document.getElementById('msg_preview_wrap').style.display = 'none';
+  const row = document.getElementById('msg_btn_row');
+  const begas = r.begas || [];
+  const btns = [];
+  ['rinnovo_wa','rinnovo_email','rinnovo_ok','rinnovo_invito'].forEach(k => {
+    btns.push('<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px" onclick="selectMsg(\''+k+'\', -1)">'+MSGS[k].label+'</button>');
+  });
+  if (begas.length) {
+    btns.push('<div style="width:100%;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Pratiche</div>');
+    ['bega_presa','bega_evasa','bega_aggiornamento','bega_documenti'].forEach(k => {
+      const idx = begas.length === 1 ? 0 : -1;
+      btns.push('<button class="btn btn-orange" style="font-size:11px;padding:5px 10px" onclick="selectMsg(\''+k+'\', '+idx+')">'+MSGS[k].label+'</button>');
+    });
+  }
+  row.innerHTML = btns.join('');
+  document.getElementById('msgModal').classList.add('open');
+}
+
+function selectMsg(key, begaIdx) {
+  const r = msgRecord;
+  const b = begaIdx >= 0 ? (r.begas||[])[begaIdx] : null;
+  const msg = MSGS[key];
+  if (!msg) return;
+  document.getElementById('msg_preview_label').textContent = msg.label;
+  document.getElementById('msg_text').value = msg.tpl(r, b);
+  document.getElementById('msg_preview_wrap').style.display = 'block';
+}
+
+function copyMsg() {
+  const t = document.getElementById('msg_text').value;
+  navigator.clipboard.writeText(t).then(() => showToast('Messaggio copiato ✓')).catch(() => {
+    document.getElementById('msg_text').select();
+    document.execCommand('copy');
+    showToast('Messaggio copiato ✓');
+  });
+}
+
+function sendWA() {
+  const t = encodeURIComponent(document.getElementById('msg_text').value);
+  const tel = (msgRecord.tel||'').replace(/\s/g,'');
+  if (tel && tel.length > 5) {
+    window.open('https://wa.me/' + tel.replace(/[^+\d]/g,'') + '?text=' + t, '_blank');
+  } else {
+    window.open('https://wa.me/?text=' + t, '_blank');
+  }
+}
+
+function sendEmail() {
+  const lines = document.getElementById('msg_text').value.split('\n');
+  const subj = lines[0].startsWith('Oggetto:') ? lines[0].replace('Oggetto:','').trim() : ('Comunicazione — ' + (msgRecord.nome||''));
+  const body = lines[0].startsWith('Oggetto:') ? lines.slice(1).join('\n') : lines.join('\n');
+  const email = msgRecord.email || msgRecord.pec || '';
+  window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+}
+
+/* ===== STAMPA ===== */
+function openPrint() {
+  document.getElementById('printModal').classList.add('open');
+}
+
+function pr(lb, vl) {
+  return '<div class="pr"><span class="lb">'+lb+'</span><span class="vl">'+(vl||'-')+'</span></div>';
+}
+
+function printScheda(tipo) {
+  const r = data.find(x => x.id === viewingId);
+  if (!r) return;
+  const now = new Date().toLocaleDateString('it-IT');
+  let html = '<div class="pp">';
+  html += '<div class="pp-hdr"><div><div class="pp-title">'+r.nome+'</div><div class="pp-sub">'+(TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo)+' — '+(r.fornitore||'')+' | '+r.stato+'</div></div><div style="text-align:right;font-size:11px;color:#888">Stampato il '+now+'</div></div>';
+
+  if (tipo === 'cliente' || tipo === 'contratto') {
+    html += '<div class="pp-sec"><div class="pp-sec-title">Dati cliente</div><div class="pp-grid">';
+    html += pr('Tipo cliente', r.tipo_cliente==='business'?'Business':'Residenziale');
+    html += pr('Cod. Fiscale', r.cf); html += pr('Telefono', r.tel);
+    html += pr('Email', r.email); html += pr('Indirizzo', r.residenza);
+    html += pr('Data nascita', fmtDate(r.data_nascita)); html += pr('Luogo nascita', r.luogo_nascita);
+    html += '</div></div>';
+  }
+  if (tipo === 'cliente') {
+    if (r.tipo_cliente==='business') {
+      html += '<div class="pp-sec"><div class="pp-sec-title">Dati aziendali</div><div class="pp-grid">';
+      html += pr('P. IVA', r.piva); html += pr('ATECO', r.ateco);
+      html += pr('Sede legale', r.sede_legale); html += pr('Legale rapp.', r.legale_rapp);
+      html += pr('PEC', r.pec); html += pr('IBAN az.', r.iban_az);
+      html += '</div></div>';
+    }
+    html += '<div class="pp-sec"><div class="pp-sec-title">Documento</div><div class="pp-grid">';
+    html += pr('Tipo', r.doc_tipo); html += pr('Numero', r.doc_num);
+    html += pr('Luogo', r.doc_luogo); html += pr('Emissione', fmtDate(r.doc_emissione));
+    html += pr('Scadenza', fmtDate(r.doc_scadenza));
+    html += '</div></div>';
+    html += '<div class="pp-sec"><div class="pp-sec-title">Banca</div><div class="pp-grid">';
+    html += pr('IBAN', r.iban); html += pr('Intestatario', r.iban_int);
+    html += '</div></div>';
+  }
+  if (tipo === 'contratto' || tipo === 'cliente') {
+    html += '<div class="pp-sec"><div class="pp-sec-title">Contratto</div><div class="pp-grid">';
+    html += pr('Fornitore', r.fornitore); html += pr('Tipo op.', TIPO_OP_LABEL[r.tipo_op]||r.tipo_op);
+    html += pr('Stato', r.stato); html += pr('Valore mensile', r.valore?'€ '+r.valore:'-');
+    html += pr('Pagamento', PAG_STATO_LABEL[r.pagamento_stato]||r.pagamento_stato);
+    html += '</div></div>';
+    if ((r.pods||[]).length) {
+      html += '<div class="pp-sec"><div class="pp-sec-title">POD / PDR</div>';
+      (r.pods||[]).forEach((p,i) => {
+        html += '<div class="pc"><strong>'+(p.tipo==='pod'?'POD — Luce':'PDR — Gas')+' #'+(i+1)+'</strong><div class="pp-grid" style="margin-top:4px">';
+        html += pr('Codice', p.codice); html += pr('Indirizzo', p.indirizzo);
+        html += pr('Fornitore uscente', p.fornitore_uscente); html += pr('Fornitore entrante', p.fornitore_entrante);
+        html += pr('Prezzo', p.prezzo); html += pr('Bolletta', p.bolletta==='web'?'Web':'Cartacea');
+        html += pr('Pagamento', {iban:'Dom. IBAN',bollettino:'Bollettino',rid:'RID'}[p.pagamento]||p.pagamento);
+        html += pr('Scadenza', fmtDate(p.data_scadenza));
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+    if (r.note) html += '<div class="pp-sec"><div class="pp-sec-title">Note</div><div style="font-size:12px;padding:6px 0">'+r.note+'</div></div>';
+  }
+  if (tipo === 'beghe') {
+    const begas = r.begas || [];
+    if (!begas.length) { showToast('Nessuna pratica registrata'); return; }
+    html += '<div class="pp-sec"><div class="pp-sec-title">Pratiche</div>';
+    begas.forEach(b => {
+      html += '<div class="bc '+(b.stato==='chiusa'?'ch':'')+'"><div style="font-weight:700;font-size:12px;margin-bottom:6px">'+(b.stato==='chiusa'?'✅':'🔥')+' '+b.tipo+'</div><div class="pp-grid">';
+      html += pr('Stato', b.stato==='chiusa'?'Chiusa':'Aperta');
+      html += pr('Fornitore', b.fornitore); html += pr('N. ticket', b.ticket);
+      html += pr('Apertura', fmtDate(b.data_apertura)); html += pr('Chiusura', fmtDate(b.data_chiusura));
+      html += '</div>'+(b.note?'<div style="font-size:11px;color:#555;margin-top:6px">'+b.note+'</div>':'')+'</div>';
+    });
+    html += '</div>';
+  }
+  html += '<div style="text-align:center;font-size:10px;color:#bbb;margin-top:24px;border-top:1px solid #eee;padding-top:10px">CRM Servizi — Gruppo tu.telati — '+now+'</div></div>';
+  document.getElementById('print_area').innerHTML = html;
+  document.getElementById('printModal').classList.remove('open');
+  setTimeout(() => window.print(), 300);
+}
+
+// Nome utente per sincronizzazione
+if (!localStorage.getItem('crm_username')) {
+  var uname = prompt('Benvenuto! Come ti chiami? (es. Carmen o il nome del collega)') || 'Utente';
+  localStorage.setItem('crm_username', uname);
+}
+window._userName = localStorage.getItem('crm_username') || 'Utente';
+
+// Mostra nome utente nella topbar
+var unameEl = document.createElement('span');
+unameEl.style.cssText = 'font-size:11px;color:#888;font-weight:600;padding:3px 8px;background:#f0f0f0;border-radius:10px';
+unameEl.textContent = '👤 ' + window._userName;
+document.querySelector('.topbar-right').prepend(unameEl);
+
+loadOfferte();
+loadTemplates();
+loadData();
+</script>
+</div><!-- /page-wrap -->
+</body>
+</html>
