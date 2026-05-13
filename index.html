@@ -2839,7 +2839,10 @@ function sendEmail() {
   const subj = lines[0].startsWith('Oggetto:') ? lines[0].replace('Oggetto:','').trim() : ('Comunicazione — ' + (msgRecord.nome||''));
   const body = lines[0].startsWith('Oggetto:') ? lines.slice(1).join('\n') : lines.join('\n');
   const email = msgRecord.email || msgRecord.pec || '';
-  window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  if(!email){ showToast('Nessuna email salvata per questo cliente'); return; }
+  // Apre Gmail nel browser con tutto precompilato
+  const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  window.open(gmailUrl, '_blank');
 }
 
 /* ===== STAMPA ===== */
