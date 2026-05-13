@@ -154,11 +154,53 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 .btn-add-bega:hover{background:var(--warm-border)}
 
 /* ── Detail ── */
-.detail-modal{max-width:620px}
-.detail-tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid var(--border);flex-wrap:wrap}
-.dtab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#887860;border-bottom:2px solid transparent;margin-bottom:-2px}
-.dtab.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
-.dtab-panel{display:none}
+.detail-modal{max-width:780px!important;padding:0!important;overflow:hidden}
+/* Header cliente */
+.d-hero{background:linear-gradient(135deg,#2F3D2A 0%,#4A7C59 100%);padding:20px 24px;display:flex;align-items:center;gap:16px;color:#fff}
+.d-hero-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;border:2px solid rgba(255,255,255,0.3);flex-shrink:0;background:rgba(255,255,255,0.15)}
+.d-hero-info{flex:1;min-width:0}
+.d-hero-nome{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.d-hero-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.25)}
+.d-hero-badge.ok{background:rgba(168,208,144,0.3);border-color:rgba(168,208,144,0.5)}
+.d-hero-badge.warn{background:rgba(223,201,128,0.3);border-color:rgba(223,201,128,0.5)}
+.d-hero-badge.err{background:rgba(232,176,168,0.3);border-color:rgba(232,176,168,0.5)}
+/* Alert bar */
+.d-alert-bar{padding:8px 24px;font-size:12px;font-weight:600;display:none}
+.d-alert-bar.scad{background:#FAEAE8;color:#7C1A1A;display:block}
+.d-alert-bar.warn{background:#FDF4DC;color:#6B4800;display:block}
+.d-alert-bar.ok{background:#EAF3DE;color:#2F5038;display:block}
+/* Tabs navigazione */
+.d-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface2);padding:0 16px}
+.d-tab{padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#887860;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
+.d-tab.active{color:var(--accent-dark);border-bottom-color:var(--accent);background:var(--surface)}
+/* Corpo dettaglio */
+.d-body{padding:20px 24px;max-height:60vh;overflow-y:auto;background:var(--surface)}
+.d-panel{display:none}
+.d-panel.active{display:block}
+/* Grid a 2 colonne */
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.d-section{margin-bottom:18px}
+.d-section.full{grid-column:1/-1}
+.d-section-title{font-size:10px;font-weight:700;color:#887860;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.d-field{padding:5px 0;display:flex;flex-direction:column;gap:1px;border-bottom:1px solid #F0EBE0}
+.d-field:last-child{border-bottom:none}
+.d-field-label{font-size:10px;color:#B0A080;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.d-field-value{font-size:12px;color:#2C2416;font-weight:500}
+.d-field-value.mono{font-family:monospace;font-size:11px}
+.d-field-value.muted{color:#887860}
+/* POD card */
+.d-pod-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.d-pod-card:last-child{margin-bottom:0}
+.d-pod-title{font-size:11px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.d-pod-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+/* Pratica card */
+.d-bega-card{border-radius:var(--radius);padding:12px;margin-bottom:10px;border:1px solid var(--warm-border);background:var(--warm-light)}
+.d-bega-card.chiusa{background:var(--surface2);border-color:var(--border);opacity:.8}
+.d-bega-title{font-size:11px;font-weight:700;color:var(--warm);margin-bottom:8px}
+.d-bega-card.chiusa .d-bega-title{color:#887860}
+/* Footer */
+.d-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:var(--surface2)}
 .dtab-panel.active{display:block}
 .detail-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee;flex-wrap:wrap}
 .avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
@@ -294,7 +336,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     </table>
     <div class="empty" id="empty" style="display:none">Nessun contratto trovato</div>
   </div>
-</div>
+</div><!-- /main -->
 
 
 <!-- ===== MODAL OFFERTE ===== -->
@@ -532,32 +574,32 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 <!-- ===== MODAL DETTAGLIO ===== -->
 <div class="modal-bg" id="detailModal">
 <div class="modal detail-modal">
-  <div class="detail-header" id="d_header"></div>
+  <!-- HERO HEADER -->
+  <div class="d-hero" id="d_header"></div>
+  <!-- ALERT BAR -->
   <div id="d_alert"></div>
-  <div id="detail_scroll" style="max-height:65vh;overflow-y:auto;padding-right:4px">
-    <div id="dp0"></div>
-    <div style="height:1px;background:#eee;margin:8px 0" id="dp0_sep"></div>
-    <div id="dp1"></div>
-    <div style="height:1px;background:#eee;margin:8px 0" id="dp1_sep"></div>
-    <div id="dp2"></div>
-    <div style="height:1px;background:#eee;margin:8px 0" id="dp2_sep"></div>
-    <div id="dp3"></div>
+  <!-- TABS -->
+  <div class="d-tabs">
+    <div class="d-tab active" onclick="switchDTab(0,this)">📋 Contratto</div>
+    <div class="d-tab" onclick="switchDTab(1,this)">👤 Cliente</div>
+    <div class="d-tab" onclick="switchDTab(2,this)">⚡ POD / PDR</div>
+    <div class="d-tab" onclick="switchDTab(3,this)">⚠️ Pratiche</div>
   </div>
-  <div class="modal-footer">
+  <!-- BODY -->
+  <div class="d-body">
+    <div class="d-panel active" id="dp0"></div>
+    <div class="d-panel" id="dp1"></div>
+    <div class="d-panel" id="dp2"></div>
+    <div class="d-panel" id="dp3"></div>
+  </div>
+  <!-- FOOTER -->
+  <div class="d-footer">
     <button class="btn btn-danger" onclick="deleteContract()">🗑 Elimina</button>
+    <button class="btn btn-orange" onclick="openPrint()">🖨 Stampa</button>
+    <button class="btn btn-green" onclick="openMessages()">💬 Messaggi</button>
+    <button class="btn" style="background:#E8F1FA;color:#1A4A7C;border-color:#A8C8E8" onclick="openLettere()">📄 Lettere</button>
     <button class="btn btn-secondary" onclick="closeDetail()">Chiudi</button>
     <button class="btn btn-primary" onclick="editFromDetail()">✏ Modifica</button>
-  </div>
-</div>
-</div>
-
-  <div class="modal-footer" style="flex-wrap:wrap">
-    <button class="btn btn-danger" onclick="deleteContract()">&#128465; Elimina</button>
-    <button class="btn btn-orange" onclick="openPrint()">&#128424; Stampa</button>
-    <button class="btn btn-green" onclick="openMessages()">&#128172; Messaggi</button>
-    <button class="btn" style="background:#E6F1FB;color:#0C447C;border-color:#B5D4F4" onclick="openLettere()">📄 Lettere</button>
-    <button class="btn btn-secondary" onclick="closeDetail()">Chiudi</button>
-    <button class="btn btn-primary" onclick="editFromDetail()">&#9999; Modifica</button>
   </div>
 </div>
 </div>
@@ -1361,157 +1403,156 @@ function closeModal(){document.getElementById('newModal').classList.remove('open
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
 function editFromDetail(){closeDetail();openEdit(viewingId);}
 
+function switchDTab(idx,el){
+  document.querySelectorAll('.d-tab').forEach((t,i)=>{
+    t.classList.toggle('active',i===idx);
+    document.getElementById('dp'+i).classList.toggle('active',i===idx);
+  });
+}
+
+function dField(label,value,mono){
+  if(!value||value==='-') return '';
+  return `<div class="d-field"><div class="d-field-label">${label}</div><div class="d-field-value${mono?' mono':''}">${value}</div></div>`;
+}
+
 function openDetail(id){
   viewingId=id;
   const r=data.find(x=>x.id===id);if(!r)return;
-  const c=TIPOCOLORS[r.tipo]||{bg:'#eee',color:'#333'};
+
+  // Reset tabs al primo
+  document.querySelectorAll('.d-tab').forEach((t,i)=>{t.classList.toggle('active',i===0);document.getElementById('dp'+i).classList.toggle('active',i===0);});
+
+  // HERO
+  const hasPod=(r.pods||[]).some(p=>p.tipo==='pod');
+  const hasPdr=(r.pods||[]).some(p=>p.tipo==='pdr');
+  const servLabel=hasPod&&hasPdr?'⚡🔥 Dual Luce+Gas':(TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo);
+  const statoClass=(r.stato||'').toLowerCase().indexOf('attiv')>=0?'ok':(r.stato||'').toLowerCase().indexOf('scad')>=0?'err':'warn';
+  const pagClass=r.pagamento_stato==='pagato'?'ok':r.pagamento_stato==='ko'?'err':'warn';
   document.getElementById('d_header').innerHTML=`
-    <div class="avatar" style="background:${c.bg};color:${c.color}">${initials(r.nome)}</div>
-    <div>
-      <div style="font-size:15px;font-weight:700">${r.nome} ${r.tipo_cliente==='business'?'<span style="font-size:10px;background:#1a1a1a;color:#fff;border-radius:3px;padding:2px 6px;vertical-align:middle">BUSINESS</span>':''}</div>
-      <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
-        <span class="badge ${r.tipo}">${(()=>{
-          const hasPod=(r.pods||[]).some(p=>p.tipo==='pod');
-          const hasPdr=(r.pods||[]).some(p=>p.tipo==='pdr');
-          if(hasPod&&hasPdr) return '⚡ Luce + 🔥 Gas (Dual)';
-          return (TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo);
-        })()}</span>
-        <span class="badge ${(r.stato||'').toLowerCase().replace(/ /g,'-')}">${r.stato}</span>
-        ${r.tipo_op?`<span style="background:#f0f0f0;color:#555;border-radius:10px;font-size:10px;font-weight:700;padding:2px 7px">${TIPO_OP_LABEL[r.tipo_op]||r.tipo_op}</span>`:''}
-        ${r.pagamento_stato?`<span class="badge ${r.pagamento_stato}">${PAG_STATO_LABEL[r.pagamento_stato]}</span>`:''}
+    <div class="d-hero-avatar">${initials(r.nome)}</div>
+    <div class="d-hero-info">
+      <div class="d-hero-nome">${r.nome}${r.tipo_cliente==='business'?' <span style="font-size:9px;background:rgba(255,255,255,0.2);border-radius:3px;padding:1px 5px">BIZ</span>':''}</div>
+      <div class="d-hero-badges">
+        <span class="d-hero-badge">${servLabel}</span>
+        ${r.stato?`<span class="d-hero-badge ${statoClass}">${r.stato}</span>`:''}
+        ${r.tipo_op?`<span class="d-hero-badge">${TIPO_OP_LABEL[r.tipo_op]||r.tipo_op}</span>`:''}
+        ${r.pagamento_stato?`<span class="d-hero-badge ${pagClass}">${PAG_STATO_LABEL[r.pagamento_stato]}</span>`:''}
+        ${r.data_inserimento?`<span class="d-hero-badge">📅 ${fmtDate(r.data_inserimento)}</span>`:''}
       </div>
     </div>`;
-  const d=daysDiff(r.scadenza);
-  let al='';
-  if(d!==null&&d<0)al=`<div class="alert-scad">⚠ Scaduto da ${Math.abs(d)} giorni</div>`;
-  else if(d!==null&&d<=30)al=`<div class="alert-warn">⚠ Scadenza tra ${d} giorni</div>`;
-  else if(d!==null)al=`<div class="alert-ok">✓ Attivo — scadenza tra ${d} giorni</div>`;
-  const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
-  if(beghe_ap)al+=`<div class="alert-warn">🔥 ${beghe_ap} pratica${beghe_ap>1?'he':''} aperta${beghe_ap>1?'e':''}</div>`;
-  document.getElementById('d_alert').innerHTML=al;
 
-  // TAB 0: CONTRATTO
-  // Leggi dati dal primo POD/PDR come fallback
-  const _pod = (r.pods||[]).find(p=>p.tipo==='pod')||{};
-  const _pdr = (r.pods||[]).find(p=>p.tipo==='pdr')||{};
-  const _forn = r.fornitore || _pod.fornitore_entrante || _pdr.fornitore_entrante || _pod.fornitore_uscente || _pdr.fornitore_uscente || '-';
-  const _prezzo = r.prezzo || _pod.prezzo || _pdr.prezzo || '-';
+  // ALERT
+  const _pod=(r.pods||[]).find(p=>p.tipo==='pod')||{};
+  const _pdr=(r.pods||[]).find(p=>p.tipo==='pdr')||{};
+  const _scadPod=_pod.data_scadenza||r.scadenza||'';
+  const _scadPdr=_pdr.data_scadenza||r.scadenza||'';
+  const dPod=daysDiff(_scadPod), dPdr=daysDiff(_scadPdr);
+  const da=document.getElementById('d_alert');
+  da.className='d-alert-bar';
+  const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+  if(beghe_ap){da.className='d-alert-bar warn';da.textContent='⚠️ '+beghe_ap+' pratica'+(beghe_ap>1?'he':'')+' aperta'+(beghe_ap>1?'e':'');}
+  else if(dPod!==null&&dPod<0){da.className='d-alert-bar scad';da.textContent='❌ Luce scaduta da '+Math.abs(dPod)+' giorni';}
+  else if(dPdr!==null&&dPdr<0){da.className='d-alert-bar scad';da.textContent='❌ Gas scaduto da '+Math.abs(dPdr)+' giorni';}
+  else if(dPod!==null&&dPod<=30){da.className='d-alert-bar warn';da.textContent='⚠ Scadenza luce tra '+dPod+' giorni';}
+  else if(dPdr!==null&&dPdr<=30){da.className='d-alert-bar warn';da.textContent='⚠ Scadenza gas tra '+dPdr+' giorni';}
+  else if(dPod!==null){da.className='d-alert-bar ok';da.textContent='✓ Attivo — scadenza tra '+dPod+' giorni';}
+  else da.style.display='none';
+
+  // Helpers per campo a 2 col
+  const F=(l,v,mono)=>v&&v!=='-'?`<div class="d-field"><div class="d-field-label">${l}</div><div class="d-field-value${mono?' mono':''}">${v}</div></div>`:'';
+  const S=(title)=>`<div class="d-section-title">${title}</div>`;
+
+  // ── PANNELLO 0: CONTRATTO ──
+  const _forn = r.fornitore || _pod.fornitore_entrante || _pdr.fornitore_entrante || _pod.fornitore_uscente || _pdr.fornitore_uscente || '';
+  const _prezzo = r.prezzo || _pod.prezzo || _pdr.prezzo || '';
   const _inizio = r.inizio || _pod.data_inizio || _pdr.data_inizio || '';
   const _scadenza = r.scadenza || _pod.data_scadenza || _pdr.data_scadenza || '';
   const _attContr = r.data_att_contratto || _pod.data_inizio || '';
   const _attForn = r.data_att_fornitura || _pod.data_attivazione || _pdr.data_attivazione || '';
   const _bolletta = _pod.bolletta || _pdr.bolletta || '';
   const _pagMod = _pod.pagamento || _pdr.pagamento || '';
-  let t0=`
-    <div class="detail-row"><span>Fornitore</span><span>${_forn}</span></div>
-    <div class="detail-row"><span>Tipo operazione</span><span>${TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'-'}</span></div>
-    <div class="detail-row"><span>Valore mensile</span><span>${r.valore?'€'+parseFloat(r.valore).toFixed(2):'-'}</span></div>
-    <div class="detail-row"><span>Prezzo offerta</span><span>${_prezzo}</span></div>
-    <div class="detail-row"><span>Stato pagamento</span><span>${PAG_STATO_LABEL[r.pagamento_stato]||'-'}</span></div>
-    <div class="detail-row"><span>Tipo bolletta</span><span>${_bolletta==='web'?'🌐 Web':_bolletta==='cartacea'?'📄 Cartacea':'-'}</span></div>
-    <div class="detail-row"><span>Modalità pagamento</span><span>${{iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro'}[_pagMod]||'-'}</span></div>
-    <div class="detail-row"><span>Data inizio</span><span>${fmtDate(_inizio)}</span></div>
-    <div class="detail-row"><span>Data scadenza</span><span>${fmtDate(_scadenza)}</span></div>
-    <div class="detail-row"><span>Att. contratto</span><span>${fmtDate(_attContr)}</span></div>
-    <div class="detail-row"><span>Att. fornitura</span><span>${fmtDate(_attForn)}</span></div>`;
-  // bolletta e pagamento ora sono per singolo POD/PDR — vedi tab POD/PDR
-  if(r.tipo==='tel')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📱 Telefonia</div>
-    <div class="detail-row"><span>Piano</span><span>${r.piano||'-'}</span></div>
-    <div class="detail-row"><span>N° contratto</span><span>${r.ncontratto||'-'}</span></div></div>`;
-  if(r.tipo==='ass')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🛡 Assicurazione</div>
-    <div class="detail-row"><span>Polizza</span><span>${r.polizza||'-'}</span></div>
-    <div class="detail-row"><span>Targa</span><span>${r.targa||'-'}</span></div></div>`;
-  if(r.tipo==='auto')t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🚗 Noleggio Auto</div>
-    <div class="detail-row"><span>Targa</span><span>${r.targa_auto||'-'}</span></div>
-    <div class="detail-row"><span>N° noleggio</span><span>${r.nnoleggio||'-'}</span></div>
-    <div class="detail-row"><span>Piano</span><span>${r.piano_auto||'-'}</span></div></div>`;
-  if(r.cat_comune||r.cat_foglio)t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏠 Dati catastali</div>
-    <div class="detail-row"><span>Comune</span><span>${r.cat_comune||'-'}</span></div>
-    <div class="detail-row"><span>Foglio / Particella / Sub</span><span>${r.cat_foglio||'-'} / ${r.cat_particella||'-'} / ${r.cat_sub||'-'}</span></div>
-    <div class="detail-row"><span>Categoria</span><span>${r.cat_categoria||'-'}</span></div>
-    <div class="detail-row"><span>N° reg. contratto</span><span>${r.cat_reg||'-'}</span></div></div>`;
-  if(r.note)t0+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Note</div><div style="font-size:12px">${r.note}</div></div>`;
-  document.getElementById('dp0').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📋 Contratto</div>'+t0;
+  const bollLabel = _bolletta==='web'?'🌐 Web':_bolletta==='cartacea'?'📄 Cartacea':'';
+  const pagLabel = {iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro',domiciliazione:'🏦 Domiciliazione',bonifico:'💸 Bonifico'}[_pagMod]||_pagMod||'';
+  document.getElementById('dp0').innerHTML=`
+    <div class="d-grid">
+      <div class="d-section">
+        ${S('📋 Dati contratto')}
+        ${F('Fornitore',_forn)}
+        ${F('Tipo operazione',TIPO_OP_LABEL[r.tipo_op]||r.tipo_op)}
+        ${F('Valore mensile',r.valore?'€ '+parseFloat(r.valore).toFixed(2):'')}
+        ${F('Prezzo offerta',_prezzo)}
+        ${F('Stato pagamento',PAG_STATO_LABEL[r.pagamento_stato]||r.pagamento_stato)}
+        ${F('Modalità pagamento',pagLabel)}
+        ${F('Tipo bolletta',bollLabel)}
+      </div>
+      <div class="d-section">
+        ${S('📅 Date')}
+        ${F('Data inizio',fmtDate(_inizio))}
+        ${F('Data scadenza',fmtDate(_scadenza))}
+        ${F('Att. contratto',fmtDate(_attContr))}
+        ${F('Att. fornitura',fmtDate(_attForn))}
+        ${F('Inserito il',fmtDate(r.data_inserimento))}
+      </div>
+    </div>
+    ${r.cat_comune||r.cat_foglio?`<div class="d-section full"><div class="d-grid">${S('🏠 Dati catastali')}${F('Comune',r.cat_comune)}${F('Foglio/Particella/Sub',(r.cat_foglio||'-')+' / '+(r.cat_particella||'-')+' / '+(r.cat_sub||'-'))}${F('Categoria',r.cat_categoria)}</div></div>`:''}
+    ${r.note?`<div class="d-section" style="margin-top:8px;padding:12px;background:var(--warm-light);border-radius:var(--radius);border:1px solid var(--warm-border)"><div style="font-size:10px;font-weight:700;color:var(--warm);margin-bottom:4px">📝 NOTE</div><div style="font-size:12px">${r.note}</div></div>`:''}`;
 
-  // TAB 1: CLIENTE
-  let t1=`
-    <div class="detail-row"><span>Tipo cliente</span><span>${r.tipo_cliente==='business'?'🏢 Business':'👤 Residenziale'}</span></div>
-    <div class="detail-row"><span>Cod. Fiscale</span><span style="font-family:monospace">${r.cf||'-'}</span></div>
-    <div class="detail-row"><span>Telefono</span><span>${r.tel||'-'}</span></div>
-    <div class="detail-row"><span>Email</span><span>${r.email||'-'}</span></div>
-    <div class="detail-row"><span>Indirizzo residenza</span><span>${r.residenza||'-'}</span></div>
-    <div class="detail-row"><span>Data di nascita</span><span>${fmtDate(r.data_nascita)}</span></div>
-    <div class="detail-row"><span>Luogo di nascita</span><span>${r.luogo_nascita||'-'}</span></div>`;
-  if(r.tipo_cliente==='business')t1+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏢 Dati aziendali</div>
-    <div class="detail-row"><span>P. IVA</span><span style="font-family:monospace">${r.piva||'-'}</span></div>
-    <div class="detail-row"><span>Codice ATECO</span><span>${r.ateco||'-'}</span></div>
-    <div class="detail-row"><span>Sede legale</span><span>${r.sede_legale||'-'}</span></div>
-    <div class="detail-row"><span>Legale rappresentante</span><span>${r.legale_rapp||'-'}</span></div>
-    <div class="detail-row"><span>PEC</span><span>${r.pec||'-'}</span></div>
-    <div class="detail-row"><span>IBAN aziendale</span><span style="font-family:monospace;font-size:11px">${r.iban_az||'-'}</span></div>
-    <div class="detail-row"><span>Intestatario IBAN az.</span><span>${r.iban_az_int||'-'}</span></div></div>`;
-  t1+=`<div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🪪 Documento</div>
-    <div class="detail-row"><span>Tipo</span><span>${r.doc_tipo||'-'}</span></div>
-    <div class="detail-row"><span>Numero</span><span style="font-family:monospace">${r.doc_num||'-'}</span></div>
-    <div class="detail-row"><span>Luogo emissione</span><span>${r.doc_luogo||'-'}</span></div>
-    <div class="detail-row"><span>Data emissione</span><span>${fmtDate(r.doc_emissione)}</span></div>
-    <div class="detail-row"><span>Scadenza C.I.</span><span>${fmtDate(r.doc_scadenza)}</span></div></div>
-  <div class="detail-section"><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">🏦 Banca personale</div>
-    <div class="detail-row"><span>IBAN</span><span style="font-family:monospace;font-size:11px">${r.iban||'-'}</span></div>
-    <div class="detail-row"><span>Intestatario</span><span>${r.iban_int||'-'}</span></div></div>`;
-  document.getElementById('dp1').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">👤 Cliente</div>'+t1;
+  // ── PANNELLO 1: CLIENTE ──
+  document.getElementById('dp1').innerHTML=`
+    <div class="d-grid">
+      <div class="d-section">
+        ${S('👤 Anagrafica')}
+        ${F('Tipo',r.tipo_cliente==='business'?'🏢 Business':'👤 Residenziale')}
+        ${F('Codice Fiscale',r.cf,true)}
+        ${F('Partita IVA',r.piva,true)}
+        ${F('Telefono',r.tel)}
+        ${F('Email',r.email)}
+        ${F('Data di nascita',fmtDate(r.data_nascita))}
+        ${F('Luogo di nascita',r.luogo_nascita)}
+        ${F('Indirizzo',r.residenza)}
+      </div>
+      <div class="d-section">
+        ${S('🪪 Documento')}
+        ${F('Tipo',r.doc_tipo)}
+        ${F('Numero',r.doc_num,true)}
+        ${F('Luogo emissione',r.doc_luogo)}
+        ${F('Data emissione',fmtDate(r.doc_emissione))}
+        ${F('Scadenza',fmtDate(r.doc_scadenza))}
+        ${S('🏦 IBAN')}
+        ${F('IBAN',r.iban,true)}
+        ${F('Intestatario',r.iban_int)}
+      </div>
+    </div>
+    ${r.tipo_cliente==='business'?`<div class="d-section" style="margin-top:4px"><div class="d-grid">${S('🏢 Dati aziendali')}${F('Sede legale',r.sede_legale)}${F('Legale rapp.',r.legale_rapp)}${F('PEC',r.pec)}${F('IBAN aziendale',r.iban_az,true)}${F('Int. IBAN az.',r.iban_az_int)}</div></div>`:''}`;
 
-  // TAB 2: POD/PDR
+  // ── PANNELLO 2: POD/PDR ──
   const pods=r.pods||[];
-  let t2=pods.length?pods.map((p,i)=>`<div class="pod-detail-card">
-    <div class="pod-detail-title">${p.tipo==='pod'?'⚡ POD — Luce':'🔥 PDR — Gas'} #${i+1}</div>
-    <div class="detail-row"><span>Codice</span><span style="font-family:monospace">${p.codice||'-'}</span></div>
-    <div class="detail-row"><span>Indirizzo fornitura</span><span>${p.indirizzo||'-'}</span></div>
-    <div class="detail-row"><span>Fornitore uscente</span><span>${p.fornitore_uscente||'-'}</span></div>
-    <div class="detail-row"><span>Fornitore entrante</span><span>${p.fornitore_entrante||'-'}</span></div>
-    <div class="detail-row"><span>Uso</span><span>${p.uso==='non_residenziale'?'Non residenziale':p.uso||'-'}</span></div>
-    <div class="detail-row"><span>Tipo operazione</span><span>${TIPO_OP_LABEL[p.tipo_op]||p.tipo_op||'-'}</span></div>
-    <div class="detail-row"><span>Tipo bolletta</span><span>${p.bolletta==='web'?'🌐 Web':p.bolletta==='cartacea'?'📄 Cartacea':'-'}</span></div>
-    <div class="detail-row"><span>Modalità pagamento</span><span>${{iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro'}[p.pagamento]||'-'}</span></div>
-    <div class="detail-row"><span>Nome offerta</span><span>${p.nome_offerta||'-'}</span></div>
-    <div class="detail-row"><span>Prezzo offerta</span><span>${p.prezzo||'-'}</span></div>
-    <div class="detail-row"><span>Durata contratto</span><span>${p.durata?p.durata==='indeterminato'?'Indeterminato':p.durata+' mesi':'-'}</span></div>
-    <div class="detail-row"><span>Data inizio</span><span>${fmtDate(p.data_inizio)}</span></div>
-    <div class="detail-row"><span>Data scadenza</span><span style="${(()=>{const d=daysDiff(p.data_scadenza);return d!==null&&d<=30&&d>=0?'color:#633806;font-weight:700':d!==null&&d<0?'color:#791F1F;font-weight:700':''})()}">${fmtDate(p.data_scadenza)}${(()=>{const d=daysDiff(p.data_scadenza);return d!==null&&d<=30&&d>=0?' ⚠ ('+d+'gg)':d!==null&&d<0?' ❌ scaduto':''})()}</span></div>
-    <div class="detail-row"><span>Data attivazione</span><span>${fmtDate(p.data_attivazione)}</span></div>
-    ${p.tipo==='pod'?`<div class="detail-row"><span>Potenza</span><span>${p.potenza?p.potenza+' kW':'-'}</span></div>
-    <div class="detail-row"><span>Consumo annuo</span><span>${p.consumo?p.consumo+' kWh':'-'}</span></div>`:`
-    <div class="detail-row"><span>Consumo annuo</span><span>${p.consumo?p.consumo+' mc':'-'}</span></div>`}
-    ${p.catastali?`<div class="detail-row"><span>Dati catastali</span><span>${p.catastali}</span></div>`:''}
-  </div>`).join(''):'<div style="text-align:center;padding:1.5rem;color:#aaa;font-size:12px">Nessun POD/PDR registrato</div>';
-  document.getElementById('dp2').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚡ POD / PDR</div>'+t2;
+  document.getElementById('dp2').innerHTML=pods.length?pods.map((p,i)=>{
+    const dScad=daysDiff(p.data_scadenza);
+    const scadStyle=dScad!==null&&dScad<0?'color:#7C1A1A;font-weight:700':dScad!==null&&dScad<=30?'color:#6B4800;font-weight:700':'';
+    const scadSuffix=dScad!==null&&dScad<0?' ❌':dScad!==null&&dScad<=30?' ⚠ ('+dScad+'gg)':'';
+    return `<div class="d-pod-card">
+      <div class="d-pod-title">${p.tipo==='pod'?'⚡ POD — Luce':'🔥 PDR — Gas'} <span style="font-family:monospace;font-size:12px;font-weight:400">${p.codice||''}</span></div>
+      <div class="d-pod-grid">
+        <div>${F('Indirizzo fornitura',p.indirizzo)}${F('Fornitore uscente',p.fornitore_uscente)}${F('Fornitore entrante',p.fornitore_entrante)}${F('Uso',p.uso==='non_residenziale'?'Non residenziale':p.uso)}${F('Tipo operazione',TIPO_OP_LABEL[p.tipo_op]||p.tipo_op)}${F('Bolletta',p.bolletta==='web'?'🌐 Web':'📄 Cartacea')}${F('Pagamento',{iban:'🏦 IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',domiciliazione:'🏦 Domiciliazione',bonifico:'💸 Bonifico'}[p.pagamento]||p.pagamento)}</div>
+        <div>${F('Data inizio',fmtDate(p.data_inizio))}
+        <div class="d-field"><div class="d-field-label">Data scadenza</div><div class="d-field-value" style="${scadStyle}">${fmtDate(p.data_scadenza)}${scadSuffix}</div></div>
+        ${F('Data attivazione',fmtDate(p.data_attivazione))}${F('Prezzo offerta',p.prezzo)}${F('Durata',p.durata?p.durata==='indeterminato'?'Indeterminato':p.durata+' mesi':'')}${p.tipo==='pod'?F('Potenza',p.potenza?p.potenza+' kW':''):''} ${F('Consumo',p.consumo?p.consumo+(p.tipo==='pod'?' kWh':' mc'):'')}</div>
+      </div>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:2rem;color:#B0A080;font-size:12px">Nessun POD/PDR registrato</div>';
 
-  // TAB 3: BEGHE
+  // ── PANNELLO 3: PRATICHE ──
   const begas=r.begas||[];
-  const dtab_beghe=document.getElementById('dtab_beghe');
   const ba=begas.filter(b=>b.stato==='aperta').length;
-  // dtab_beghe removed - single scroll view
-  let t3=begas.length?begas.map(b=>`<div class="bega-detail-card ${b.stato==='chiusa'?'chiusa':''}">
-    <div class="bega-detail-title">${b.stato==='chiusa'?'✅':'🔥'} ${b.tipo}</div>
-    <div class="detail-row"><span>Stato</span><span>${b.stato==='aperta'?'Aperta':'Chiusa'}</span></div>
-    <div class="detail-row"><span>Fornitore</span><span>${b.fornitore||'-'}</span></div>
-    <div class="detail-row"><span>N° ticket</span><span style="font-family:monospace">${b.ticket||'-'}</span></div>
-    <div class="detail-row"><span>Data apertura</span><span>${fmtDate(b.data_apertura)}</span></div>
-    <div class="detail-row"><span>Data chiusura</span><span>${fmtDate(b.data_chiusura)}</span></div>
-    ${b.note?`<div style="font-size:11px;color:#555;margin-top:4px;padding-top:4px;border-top:1px solid #eee">${b.note}</div>`:''}
-  </div>`).join(''):'<div style="text-align:center;padding:1.5rem;color:#aaa;font-size:12px">Nessuna pratica registrata</div>';
-  document.getElementById('dp3').innerHTML='<div style="font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚠️ Pratiche</div>'+t3;
+  document.getElementById('dp3').innerHTML=begas.length?begas.map(b=>`<div class="d-bega-card ${b.stato==='chiusa'?'chiusa':''}">
+    <div class="d-bega-title">${b.stato==='chiusa'?'✅':'🔥'} ${b.tipo}</div>
+    <div class="d-grid">
+      ${F('Stato',b.stato==='aperta'?'Aperta':'Chiusa')}${F('Fornitore',b.fornitore)}${F('N° ticket',b.ticket,true)}${F('Data apertura',fmtDate(b.data_apertura))}${F('Data chiusura',fmtDate(b.data_chiusura))}
+    </div>
+    ${b.note?`<div style="font-size:11px;color:#887860;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${b.note}</div>`:''}
+  </div>`).join(''):'<div style="text-align:center;padding:2rem;color:#B0A080;font-size:12px">Nessuna pratica registrata</div>';
 
-  // single scroll - all panels visible
-  // Hide separators for empty panels
-  ['dp0','dp1','dp2','dp3'].forEach(function(pid){
-    var sep = document.getElementById(pid+'_sep');
-    var panel = document.getElementById(pid);
-    if(sep) sep.style.display = (panel&&panel.innerHTML.trim()) ? 'block' : 'none';
-  });
-  // Scroll to top
-  var ds = document.getElementById('detail_scroll');
-  if(ds) ds.scrollTop = 0;
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -2665,8 +2706,7 @@ function copiaLettera() {
 
 function stampaLettera() {
   var testo = document.getElementById('lett_text').value;
-  var html = '<html><head><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.8;margin:50px 60px;color:#1a1a1a}pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:13px}</style></head><body><pre>' + testo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div><!-- /page-wrap -->
-</body></html>';
+  var html = '<html><head><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.8;margin:50px 60px;color:#1a1a1a}pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:13px}</style></head><body><pre>' + testo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></body></html>';
   var win = window.open('','_blank');
   win.document.write(html);
   win.document.close();
