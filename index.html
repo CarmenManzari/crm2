@@ -262,7 +262,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
   <div class="sidebar-footer">
     <button class="nav-btn" onclick="openNew()"><span class="icon">➕</span> Nuovo contratto</button>
     <button class="nav-btn" onclick="document.getElementById('importModal').classList.add('open')"><span class="icon">⬆</span> Importa</button>
-    <button class="nav-btn" onclick="exportCSV()"><span class="icon">⬇</span> Export CSV</button>
+    <button class="nav-btn" onclick="openExportModal()"><span class="icon">⬇</span> Export Excel</button>
     <button class="nav-btn" onclick="document.getElementById('restoreModal').classList.add('open')"><span class="icon">♻</span> Ripristina backup</button>
   </div>
 </div>
@@ -605,6 +605,53 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 </div>
 
 
+
+<!-- ===== MODAL EXPORT EXCEL ===== -->
+<div class="modal-bg" id="exportModal">
+<div class="modal" style="max-width:540px">
+  <h2>⬇ Export Excel per fornitore</h2>
+  <div style="font-size:12px;color:#555;margin-bottom:14px;line-height:1.6">
+    Esporta i dati del CRM in formato Excel (<code>.xlsx</code>) con tutti i campi, inclusi POD/PDR.<br>
+    <span style="font-size:11px;color:#888">Puoi esportare tutti i contratti oppure filtrare per fornitore specifico.</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+    <div class="form-group">
+      <label>Filtra per fornitore</label>
+      <select id="exp_fornitore" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit">
+        <option value="">-- Tutti i fornitori --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Filtra per tipo servizio</label>
+      <select id="exp_tipo" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit">
+        <option value="">-- Tutti i servizi --</option>
+        <option value="luce">⚡ Luce</option>
+        <option value="gas">🔥 Gas</option>
+        <option value="tel">📱 Telefonia</option>
+        <option value="ass">🛡 Assicurazioni</option>
+        <option value="auto">🚗 Noleggio Auto</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Filtra per stato</label>
+      <select id="exp_stato" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit">
+        <option value="">-- Tutti gli stati --</option>
+        <option>Attivo</option><option>Proposta</option>
+        <option>In lavorazione</option><option>Scaduto</option>
+      </select>
+    </div>
+    <div style="background:var(--accent-light);border:1px solid var(--gas-border);border-radius:var(--radius);padding:9px 12px;font-size:11px;color:var(--accent-dark)">
+      ✅ Il file Excel includerà: anagrafica, documento, IBAN, contratto, <strong>tutti i POD/PDR con tutti i dettagli</strong>, pratiche aperte e note.
+    </div>
+    <div id="exp_preview" style="font-size:12px;color:#555;font-style:italic;min-height:18px"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="document.getElementById('exportModal').classList.remove('open')">Annulla</button>
+    <button class="btn btn-secondary" onclick="exportCSV()" style="border-color:var(--border2)">📄 Export CSV (backup)</button>
+    <button class="btn btn-primary" onclick="exportExcel()">📊 Scarica Excel</button>
+  </div>
+</div>
+</div>
 
 <!-- ===== MODAL RIPRISTINA BACKUP ===== -->
 <div class="modal-bg" id="restoreModal">
@@ -1094,21 +1141,15 @@ function deselezionaTutti() {
   const chkAll=document.getElementById('chk_all'); if(chkAll) chkAll.checked=false;
   aggiornaSelzione();
 }
-async function eliminaSelezionati() {
+function eliminaSelezionati() {
   const ids = Array.from(document.querySelectorAll('.row-chk:checked')).map(c=>parseInt(c.getAttribute('data-id')));
   if(!ids.length) return;
   if(!confirm(`Eliminare ${ids.length} client${ids.length===1?'e':'i'} selezionat${ids.length===1?'o':'i'}? L'operazione non può essere annullata.`)) return;
-  let ok=0, err=0;
-  for(const id of ids){
-    try {
-      await db.collection('clienti').doc(String(id)).delete();
-      data = data.filter(r=>r.id!==id);
-      ok++;
-    } catch(e){ err++; }
-  }
+  data = data.filter(r=>ids.indexOf(r.id)<0);
+  saveData();
   deselezionaTutti();
   renderStats(); renderTable();
-  showToast(ok+' client'+( ok===1?'e':'i')+' eliminat'+(ok===1?'o':'i')+(err?' ('+err+' errori)':''));
+  showToast(ids.length+' client'+(ids.length===1?'e':'i')+' eliminat'+(ids.length===1?'o':'i')+' ✓');
 }
 
 function setTab(t,el){
@@ -1565,6 +1606,11 @@ function deleteContract(){
 }
 
 function exportCSV(){
+  // Colonne fisse + colonne dinamiche per POD 1, POD 2, PDR 1, PDR 2
+  const POD_COLS=['Codice POD 1','Indirizzo POD 1','Fornitore uscente POD 1','Fornitore entrante POD 1','Inizio POD 1','Scadenza POD 1','Prezzo POD 1',
+                  'Codice POD 2','Indirizzo POD 2','Fornitore uscente POD 2','Fornitore entrante POD 2','Inizio POD 2','Scadenza POD 2','Prezzo POD 2',
+                  'Codice PDR 1','Indirizzo PDR 1','Fornitore uscente PDR 1','Fornitore entrante PDR 1','Inizio PDR 1','Scadenza PDR 1','Prezzo PDR 1',
+                  'Codice PDR 2','Indirizzo PDR 2','Fornitore uscente PDR 2','Fornitore entrante PDR 2','Inizio PDR 2','Scadenza PDR 2','Prezzo PDR 2'];
   const hdr=['ID','Nome','Tipo cliente','CF','P.IVA','ATECO','Sede legale','Legale rapp.','PEC','IBAN az.','Int.IBAN az.',
     'Tel','Email','Residenza','Doc.tipo','Doc.num','Doc.luogo','Doc.emissione','Doc.scadenza',
     'IBAN','Int.IBAN','Tipo','Fornitore','Stato','Tipo operazione','Valore','Prezzo',
@@ -1572,10 +1618,22 @@ function exportCSV(){
     'Bolletta luce','Pag.luce','Bolletta gas','Pag.gas',
     'Piano tel','N.contr.tel','Polizza','Targa ass','Targa auto','N.noleggio','Piano auto',
     'Cat.comune','Cat.foglio','Cat.particella','Cat.sub','Cat.categoria','Cat.reg',
-    'N.POD/PDR','POD/PDR (codici)','Beghe aperte','Note'];
+    'Beghe aperte','Note',...POD_COLS];
+
+  function podFields(pods, tipo, idx){
+    const p=(pods||[]).filter(x=>x.tipo===tipo)[idx];
+    if(!p) return ['','','','','','',''];
+    return [p.codice||'',p.indirizzo||'',p.fornitore_uscente||'',p.fornitore_entrante||'',p.data_inizio||'',p.data_scadenza||'',p.prezzo||''];
+  }
+
   const rows=data.map(r=>{
-    const pods_str=(r.pods||[]).map(p=>`${p.tipo.toUpperCase()}:${p.codice} ${p.indirizzo} Usc:${p.fornitore_uscente||'-'} Entr:${p.fornitore_entrante||'-'} ${p.prezzo||''} ${p.durata||''}mesi Inizio:${p.data_inizio||'-'} Scad:${p.data_scadenza||'-'}`).join(' | ');
     const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
+    const podData=[
+      ...podFields(r.pods,'pod',0),
+      ...podFields(r.pods,'pod',1),
+      ...podFields(r.pods,'pdr',0),
+      ...podFields(r.pods,'pdr',1),
+    ];
     return [r.id,r.nome,r.tipo_cliente,r.cf,r.piva||'',r.ateco||'',r.sede_legale||'',r.legale_rapp||'',r.pec||'',r.iban_az||'',r.iban_az_int||'',
       r.tel,r.email,r.residenza,r.doc_tipo||'',r.doc_num||'',r.doc_luogo||'',r.doc_emissione||'',r.doc_scadenza||'',
       r.iban||'',r.iban_int||'',TIPOLABEL[r.tipo]||r.tipo,r.fornitore,r.stato,TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'',
@@ -1583,7 +1641,8 @@ function exportCSV(){
       r.bolletta_luce||'',r.pagamento_luce||'',r.bolletta_gas||'',r.pagamento_gas||'',
       r.piano||'',r.ncontratto||'',r.polizza||'',r.targa||'',r.targa_auto||'',r.nnoleggio||'',r.piano_auto||'',
       r.cat_comune||'',r.cat_foglio||'',r.cat_particella||'',r.cat_sub||'',r.cat_categoria||'',r.cat_reg||'',
-      (r.pods||[]).length,pods_str,beghe_ap,(r.note||'').replace(/\n/g,' ')
+      beghe_ap,(r.note||'').replace(/\n/g,' '),
+      ...podData
     ].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(';');
   });
   const csv='\uFEFF'+[hdr.join(';'),...rows].join('\r\n');
@@ -1591,6 +1650,124 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='CRM_Servizi_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();URL.revokeObjectURL(url);showToast('Export CSV scaricato ✓');
+}
+/* ===== EXPORT EXCEL ===== */
+function openExportModal(){
+  var sel=document.getElementById('exp_fornitore');
+  var fornitori=[];
+  data.forEach(function(r){
+    var f=r.fornitore||(r.pods&&r.pods[0]&&(r.pods[0].fornitore_entrante||r.pods[0].fornitore_uscente))||'';
+    if(f&&fornitori.indexOf(f)<0) fornitori.push(f);
+  });
+  fornitori.sort();
+  sel.innerHTML='<option value="">-- Tutti i fornitori --</option>'+fornitori.map(function(f){return'<option>'+f+'</option>';}).join('');
+  aggiornaPreviewExport();
+  document.getElementById('exportModal').classList.add('open');
+}
+function aggiornaPreviewExport(){
+  var forn=document.getElementById('exp_fornitore').value;
+  var tipo=document.getElementById('exp_tipo').value;
+  var stato=document.getElementById('exp_stato').value;
+  var count=data.filter(function(r){
+    var rf=r.fornitore||(r.pods&&r.pods[0]&&(r.pods[0].fornitore_entrante||r.pods[0].fornitore_uscente))||'';
+    return(!forn||rf===forn)&&(!tipo||r.tipo===tipo)&&(!stato||r.stato===stato);
+  }).length;
+  var el=document.getElementById('exp_preview');
+  if(el) el.textContent=count+' contratti verranno esportati';
+}
+function exportExcel(){
+  function doExport(){
+    var forn=document.getElementById('exp_fornitore').value;
+    var tipo=document.getElementById('exp_tipo').value;
+    var stato=document.getElementById('exp_stato').value;
+    var filtered=data.filter(function(r){
+      var rf=r.fornitore||(r.pods&&r.pods[0]&&(r.pods[0].fornitore_entrante||r.pods[0].fornitore_uscente))||'';
+      return(!forn||rf===forn)&&(!tipo||r.tipo===tipo)&&(!stato||r.stato===stato);
+    });
+    if(!filtered.length){showToast('Nessun contratto trovato');return;}
+    var TIPOMAP={luce:'Luce',gas:'Gas',tel:'Telefonia',ass:'Assicurazione',auto:'Noleggio Auto'};
+    var TOPMAP={switch:'Switch',subentro:'Subentro',voltura:'Voltura',nuovo:'Nuova attivazione',rinnovo:'Rinnovo'};
+
+    // ── Foglio principale: tutto in uno (per reimport corretto) ──
+    var hMain=[
+      'Nome','CF','P.IVA','Tel','Email','Residenza','Tipo cliente','Tipo servizio','Fornitore',
+      'Stato','Tipo operazione','Valore','Prezzo','Inizio','Scadenza','Att.contratto','Att.fornitura',
+      'Stato pagamento','Bolletta luce','Pag.luce','Bolletta gas','Pag.gas','Note',
+      // Documento
+      'Doc.tipo','Doc.num','Doc.luogo','Doc.emissione','Doc.scadenza',
+      // IBAN
+      'IBAN','Int.IBAN','PEC',
+      // POD 1
+      'Codice POD 1','Indirizzo POD 1','Fornitore uscente POD 1','Fornitore entrante POD 1','Inizio POD 1','Scadenza POD 1','Prezzo POD 1',
+      // POD 2
+      'Codice POD 2','Indirizzo POD 2','Fornitore uscente POD 2','Fornitore entrante POD 2','Inizio POD 2','Scadenza POD 2','Prezzo POD 2',
+      // PDR 1
+      'Codice PDR 1','Indirizzo PDR 1','Fornitore uscente PDR 1','Fornitore entrante PDR 1','Inizio PDR 1','Scadenza PDR 1','Prezzo PDR 1',
+      // PDR 2
+      'Codice PDR 2','Indirizzo PDR 2','Fornitore uscente PDR 2','Fornitore entrante PDR 2','Inizio PDR 2','Scadenza PDR 2','Prezzo PDR 2',
+    ];
+    var rMain=[hMain];
+
+    function podF(pods,tipo,idx){
+      var p=(pods||[]).filter(function(x){return x.tipo===tipo;})[idx];
+      if(!p) return ['','','','','','',''];
+      return [p.codice||'',p.indirizzo||'',p.fornitore_uscente||'',p.fornitore_entrante||'',p.data_inizio||'',p.data_scadenza||'',p.prezzo||''];
+    }
+
+    filtered.forEach(function(r){
+      var forn=r.fornitore||(r.pods&&r.pods[0]&&(r.pods[0].fornitore_entrante||r.pods[0].fornitore_uscente))||'';
+      rMain.push([
+        r.nome||'',r.cf||'',r.piva||'',r.tel||'',r.email||'',r.residenza||'',
+        r.tipo_cliente==='business'?'Business':'Residenziale',
+        TIPOMAP[r.tipo]||r.tipo||'',forn,r.stato||'',
+        TOPMAP[r.tipo_op]||r.tipo_op||'',r.valore||'',r.prezzo||'',
+        r.inizio||'',r.scadenza||'',r.data_att_contratto||'',r.data_att_fornitura||'',
+        r.pagamento_stato||'',r.bolletta_luce||'',r.pagamento_luce||'',r.bolletta_gas||'',r.pagamento_gas||'',
+        (r.note||'').replace(/\n/g,' '),
+        // Documento
+        r.doc_tipo||'',r.doc_num||'',r.doc_luogo||'',r.doc_emissione||'',r.doc_scadenza||'',
+        // IBAN
+        r.iban||'',r.iban_int||'',r.pec||'',
+        // POD/PDR separati
+        ...podF(r.pods,'pod',0),
+        ...podF(r.pods,'pod',1),
+        ...podF(r.pods,'pdr',0),
+        ...podF(r.pods,'pdr',1),
+      ]);
+    });
+
+    // ── Foglio Pratiche (separato perché ha struttura diversa) ──
+    var h4=['Nome','CF','Tipo pratica','Fornitore','N.ticket','Stato','Data apertura','Data chiusura','Note pratica'];
+    var r4=[h4];
+    filtered.forEach(function(r){
+      (r.begas||[]).forEach(function(b){
+        r4.push([r.nome||'',r.cf||'',b.tipo||'',b.fornitore||r.fornitore||'',b.ticket||'',
+          b.stato==='aperta'?'Aperta':'Chiusa',b.data_apertura||'',b.data_chiusura||'',b.note||'']);
+      });
+    });
+    if(r4.length===1) r4.push(['Nessuna pratica']);
+
+    var wb=XLSX.utils.book_new();
+    function makeSheet(rows){
+      var ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=rows[0].map(function(_,ci){
+        return{wch:Math.min(50,Math.max.apply(null,rows.map(function(r){return r[ci]?String(r[ci]).length:0;}).concat([rows[0][ci].length]))+2)};
+      });
+      return ws;
+    }
+    XLSX.utils.book_append_sheet(wb,makeSheet(rMain),'CRM');
+    XLSX.utils.book_append_sheet(wb,makeSheet(r4),'Pratiche');
+
+    var fname='CRM_Export'+(forn?'_'+forn.replace(/[^a-zA-Z0-9]/g,'_'):'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    XLSX.writeFile(wb,fname);
+    document.getElementById('exportModal').classList.remove('open');
+    showToast('Excel esportato: '+filtered.length+' contratti ✓');
+  }
+  if(typeof XLSX==='undefined'){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=doExport;document.head.appendChild(s);
+  } else { doExport(); }
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1838,7 +2015,9 @@ var importSep = ';';
 // Campi del CRM con etichette leggibili
 var CRM_FIELDS = [
   {key:'_skip',        label:'-- Non importare --'},
-  {key:'nome',         label:'Nome cliente *'},
+  {key:'nome',         label:'Nome cliente (campo unico)'},
+  {key:'nome_solo',    label:'Nome (solo nome proprio)'},
+  {key:'cognome',      label:'Cognome cliente'},
   {key:'tipo_cliente', label:'Tipo cliente (residenziale/business)'},
   {key:'cf',           label:'Codice Fiscale / P.IVA'},
   {key:'piva',         label:'Partita IVA'},
@@ -1893,7 +2072,9 @@ var CRM_FIELDS = [
 // Supporta sia file CRM Salesforce/gestionale che file personalizzati
 var AUTOMAP_RULES = [
   // ── NOME CLIENTE ── (prima cognome+nome separati, poi campo unico)
-  {field:'nome',        words:['cognome cliente','nome cliente','ragione sociale','nominativo','intestatario contratto','nome','cognome','name','first','surname','last']},
+  {field:'cognome',     words:['cognome cliente','cognome']},
+  {field:'nome_solo',   words:['nome cliente','nome proprio']},
+  {field:'nome',        words:['ragione sociale','nominativo','intestatario contratto','nome e cognome','name','surname']},
   // ── CONTATTI ──
   {field:'tel',         words:['cell','telefon','phone','mobile','tel','gsm','contatto prefer']},
   {field:'email',       words:['mail','email','e-mail']},
@@ -1904,11 +2085,11 @@ var AUTOMAP_RULES = [
   {field:'residenza',   words:['residenza','indirizzo cliente','indirizzo anagrafica','billing','address','via ','città']},
   {field:'tipo_cliente',words:['tipo cliente','category','categoria','persona fisica','persona giuridica']},
   // ── DOCUMENTO ──
-  {field:'doc_tipo',    words:['tipo documento','tipo doc']},
-  {field:'doc_num',     words:['numero documento cliente','numero documento','numero doc','n.ro doc','carta d identit','patente','passaporto']},
-  {field:'doc_luogo',   words:['luogo emissione documento','rilasciato da','doc. cliente rilasciato da','ente emissione','motorizzazione']},
-  {field:'doc_scadenza',words:['scadenza documento','scadenza doc','data scadenza doc']},
-  {field:'doc_emissione',words:['data emissione documento','data rilascio','rilascio doc','emissione documento']},
+  {field:'doc_tipo',    words:['tipo documento','tipo doc','doc.tipo','tipologia documento']},
+  {field:'doc_num',     words:['n.doc','numero documento','numero documento cliente','numero documento','numero doc','n.ro doc','carta d identit','patente','passaporto']},
+  {field:'doc_luogo',   words:['luogo emissione documento','luogo emissione','rilasciato da','doc. cliente rilasciato da','ente emissione','motorizzazione','doc.luogo']},
+  {field:'doc_scadenza',words:['scadenza documento','scadenza doc','data scadenza doc','doc.scadenza']},
+  {field:'doc_emissione',words:['data emissione documento','data emissione','data rilascio','rilascio doc','emissione documento','doc.emissione']},
   // ── NASCITA ──
   {field:'luogo_nascita',words:['comune di nascita','luogo di nascita','luogo nascita','provincia di nascita','nato a','birthplace']},
   {field:'data_nascita', words:['data di nascita','data nascita','born','birth date']},
@@ -1920,16 +2101,36 @@ var AUTOMAP_RULES = [
   // ── POD / PDR ──
   {field:'pod2',         words:['codice pod 2','pod 2','secondo pod','2° pod','pod2']},
   {field:'pdr2',         words:['codice pdr 2','pdr 2','secondo pdr','2° pdr','pdr2']},
-  {field:'indirizzo_fornitura_ee2', words:['indirizzo fornitura ee 2','indirizzo fornitura luce 2','fornitura ee 2']},
-  {field:'indirizzo_fornitura_gas2',words:['indirizzo fornitura gas 2','fornitura gas 2']},
-  {field:'indirizzo_fornitura_ee',  words:['indirizzo fornitura ee','indirizzo fornitura luce','fornitura ee 1','fornitura luce']},
-  {field:'indirizzo_fornitura_gas', words:['indirizzo fornitura gas','indirizzo fornitura gas 1','fornitura gas 1','fornitura gas']},
+  {field:'indirizzo_fornitura_ee2', words:['indirizzo pod 2','indirizzo fornitura ee 2','indirizzo fornitura luce 2','fornitura ee 2']},
+  {field:'indirizzo_fornitura_gas2',words:['indirizzo pdr 2','indirizzo fornitura gas 2','fornitura gas 2']},
+  {field:'indirizzo_fornitura_ee',  words:['indirizzo pod 1','indirizzo pod','indirizzo fornitura ee','indirizzo fornitura luce','fornitura ee 1','fornitura luce']},
+  {field:'indirizzo_fornitura_gas', words:['indirizzo pdr 1','indirizzo pdr','indirizzo fornitura gas','indirizzo fornitura gas 1','fornitura gas 1','fornitura gas']},
   {field:'indirizzo_fornitura',     words:['indirizzo di fornitura','indirizzo fornitura','indirizzo,']},
   {field:'consumo_gas',  words:['consumo annuo mc','consumo mc','consumo gas','mc/anno']},
-  {field:'pod',          words:['service point code','codice pod (luce)','codice pod','pod/pdr','pod']},
-  {field:'pdr',          words:['codice pdr (gas)','codice pdr','pdr','matricola gas']},
+  {field:'pod',          words:['codice pod 1','service point code','codice pod (luce)','codice pod','pod/pdr','pod']},
+  {field:'fornitore_uscente_pod',   words:['fornitore uscente pod 1','fornitore uscente pod']},
+  {field:'fornitore_entrante_pod',  words:['fornitore entrante pod 1','fornitore entrante pod']},
+  {field:'fornitore_uscente_pod2',  words:['fornitore uscente pod 2']},
+  {field:'fornitore_entrante_pod2', words:['fornitore entrante pod 2']},
+  {field:'fornitore_uscente_pdr1',  words:['fornitore uscente pdr 1','fornitore uscente pdr']},
+  {field:'fornitore_entrante_pdr1', words:['fornitore entrante pdr 1','fornitore entrante pdr']},
+  {field:'fornitore_uscente_pdr2',  words:['fornitore uscente pdr 2']},
+  {field:'fornitore_entrante_pdr2', words:['fornitore entrante pdr 2']},
+  {field:'inizio_pod',   words:['inizio pod 1','inizio pod']},
+  {field:'scadenza_pod', words:['scadenza pod 1','scadenza pod']},
+  {field:'prezzo_pod',   words:['prezzo pod 1','prezzo pod']},
+  {field:'inizio_pod2',  words:['inizio pod 2']},
+  {field:'scadenza_pod2',words:['scadenza pod 2']},
+  {field:'prezzo_pod2',  words:['prezzo pod 2']},
+  {field:'inizio_pdr',   words:['inizio pdr 1','inizio pdr']},
+  {field:'scadenza_pdr', words:['scadenza pdr 1','scadenza pdr']},
+  {field:'prezzo_pdr',   words:['prezzo pdr 1','prezzo pdr']},
+  {field:'inizio_pdr2',  words:['inizio pdr 2']},
+  {field:'scadenza_pdr2',words:['scadenza pdr 2']},
+  {field:'prezzo_pdr2',  words:['prezzo pdr 2']},
+  {field:'pdr',          words:['codice pdr 1','codice pdr (gas)','codice pdr','pdr','matricola gas']},
   // ── CONTRATTO ──
-  {field:'tipo_op',     words:['tipo integration case','tipo integration','prestazione','switching','switch in','voltura','subentro','tipo operazione','migrazione','formula']},
+  {field:'tipo_op',     words:['tipo integration case','tipo integration','prestazione','switching','switch in','voltura','subentro','tipo operazione','tipo op.','migrazione','formula']},
   {field:'stato',       words:['stato pdc','stato otp','stato case','stato contratto','avanzamento','fase','stato','status']},
   {field:'inizio',      words:['data presunta inizio','data firma','data inizio','inizio','start','decorrenza','data conferma']},
   {field:'scadenza',    words:['scadenza','expiry','fine contratto']},
@@ -1941,9 +2142,10 @@ var AUTOMAP_RULES = [
   // ── PAGAMENTO ──
   {field:'bolletta',    words:['contract account','canale di invio','bolletta','fattura','invio']},
   {field:'pagamento_mod',words:['billing profile','modalità di pagamento','modalita di pagamento','scaglione','pagamento','fatturazione','payment']},
-  {field:'pagamento_stato',words:['causa ko','stato pag','ko']},
+  {field:'pagamento_stato',words:['causa ko','stato pagamento','stato pag.','stato pag','ko']},
   {field:'iban',        words:['iban']},
-  {field:'iban_int',    words:['intestatario iban','titolare iban','delegato']},
+  {field:'iban_int',    words:['intestatario iban','int.iban','titolare iban','delegato']},
+  {field:'pec',         words:['pec','posta certificata','email pec']},
   // ── FORNITURA ──
   {field:'potenza',     words:['potenza richiesta','potenza','kw','tensione']},
   {field:'consumo',     words:['consumo']},
@@ -2102,23 +2304,21 @@ function elaboraCSV(text, fileName) {
 }
 
 function eseguiImport() {
-  // Leggi la mappatura corrente dai select
   var mapping={};
   var selects=document.getElementById('mapping_table').querySelectorAll('select');
   for(var i=0;i<selects.length;i++){
     var col=selects[i].getAttribute('data-col');
     var field=selects[i].value;
-    if(field!=='_skip' && col) mapping[col]=field;
+    if(field!=='_skip'&&col) mapping[col]=field;
   }
-
   var tipoDefault=document.getElementById('import_tipo_default').value;
   var tipoClienteDefault=document.getElementById('import_tipo_cliente_default').value;
 
-  function getVal(row, field) {
-    for(var col in mapping){ if(mapping[col]===field && row[col]) return row[col].trim(); }
+  function getVal(row,field){
+    for(var col in mapping){if(mapping[col]===field&&row[col]&&String(row[col]).trim())return String(row[col]).trim();}
     return '';
   }
-  function normalDate(s) {
+  function normalDate(s){
     if(!s)return'';
     var m=s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})/);
     if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
@@ -2127,10 +2327,11 @@ function eseguiImport() {
     return s;
   }
   function normalStato(s){
-    if(!s)return'Proposta';
+    if(!s)return'In lavorazione';
     var sl=s.toLowerCase();
-    if(sl.indexOf('attiv')>=0||sl==='ok')return'Attivo';
+    if(sl.indexOf('annull')>=0)return'Scaduto';
     if(sl.indexOf('ko')>=0||sl.indexOf('scadut')>=0)return'Scaduto';
+    if(sl.indexOf('attiv')>=0||sl==='ok'||sl.indexOf('win')>=0)return'In lavorazione';
     if(sl.indexOf('lavoraz')>=0||sl.indexOf('corso')>=0)return'In lavorazione';
     return'Proposta';
   }
@@ -2139,97 +2340,185 @@ function eseguiImport() {
     var sl=s.toLowerCase();
     if(sl.indexOf('voltura')>=0)return'voltura';
     if(sl.indexOf('subentro')>=0)return'subentro';
-    if(sl.indexOf('nuova')>=0||sl.indexOf('new')>=0)return'nuovo';
+    if(sl.indexOf('nuova')>=0||sl.indexOf('new')>=0||sl.indexOf('attivaz')>=0)return'nuovo';
     if(sl.indexOf('rinnovo')>=0)return'rinnovo';
     return'switch';
   }
+  function normalBoll(s){var sl=(s||'').toLowerCase();return sl.indexOf('web')>=0?'web':sl.indexOf('cart')>=0?'cartacea':'';}
+  function normalPag(s){var sl=(s||'').toLowerCase();return sl.indexOf('dom')>=0||sl.indexOf('rid')>=0?'domiciliazione':sl.indexOf('boll')>=0?'bollettino':sl.indexOf('bon')>=0?'bonifico':'';}
+  function isPOD(c){return c&&String(c).toUpperCase().startsWith('IT');}
+  function isPDR(c){return c&&String(c).trim().length>=10&&/^[0-9]+$/.test(String(c).trim());}
 
-  var importati=0, saltati=0;
+  var clientiMap={};
   importRows.forEach(function(row){
-    var nome=getVal(row,'nome');
-    if(!nome)return saltati++;
-    var tel=getVal(row,'tel');
+    var ns=getVal(row,'nome_solo');var cog=getVal(row,'cognome');var n=getVal(row,'nome');
+    var nome=ns&&cog?(ns+' '+cog).trim():cog&&!ns?cog:n;
+    if(!nome)return;
     var cf=getVal(row,'cf');
-    // check duplicates
-    var dup=data.find(function(d){
-      return (cf&&d.cf&&d.cf===cf)||(d.nome===nome&&d.tel===tel&&tel);
+    var key=cf&&cf.length>5?cf:nome.toLowerCase().replace(/\s+/g,'_');
+    if(!clientiMap[key]){clientiMap[key]={anagrafica:row,righe:[]};}
+    clientiMap[key].righe.push(row);
+  });
+
+  var importati=0,aggiornati=0,saltati=0,annullati=0;
+
+  // Funzione che aggiorna solo i campi vuoti di un record esistente
+  function mergeRecord(dup, newVals, newPods){
+    var changed=false;
+    var campi=['tel','email','residenza','cf','piva','ateco','data_nascita','luogo_nascita',
+      'doc_tipo','doc_num','doc_luogo','doc_emissione','doc_scadenza',
+      'iban','iban_int','pec','fornitore','stato','tipo_op','valore','prezzo',
+      'inizio','scadenza','data_att_contratto','data_att_fornitura',
+      'pagamento_stato','bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas','note'];
+    campi.forEach(function(k){
+      if((!dup[k]||dup[k]==='')&&newVals[k]&&newVals[k]!==''){
+        dup[k]=newVals[k]; changed=true;
+      }
     });
-    if(dup)return saltati++;
+    // POD/PDR: aggiungi solo quelli nuovi (codice non già presente)
+    if(!dup.pods) dup.pods=[];
+    newPods.forEach(function(np){
+      var exists=dup.pods.find(function(ep){return ep.codice&&ep.codice===np.codice;});
+      if(!exists&&np.codice){dup.pods.push(np);changed=true;}
+    });
+    return changed;
+  }
 
-    var podCod=getVal(row,'pod');
-    var pdrCod=getVal(row,'pdr');
-    var tipo=tipoDefault;
-    if(podCod&&!pdrCod)tipo='luce';
-    else if(pdrCod&&!podCod)tipo='gas';
-    else if(podCod&&pdrCod)tipo='luce';
+  Object.keys(clientiMap).forEach(function(key){
+    var gruppo=clientiMap[key];
+    var pr=gruppo.anagrafica;
+    var ns=getVal(pr,'nome_solo');var cog=getVal(pr,'cognome');var n=getVal(pr,'nome');
+    var nome=ns&&cog?(ns+' '+cog).trim():cog&&!ns?cog:n;
+    var cf=getVal(pr,'cf');var tel=getVal(pr,'tel');
+    var dup=data.find(function(d){return(cf&&d.cf&&d.cf===cf)||(d.nome===nome&&d.tel===tel&&tel);});
 
-    var pods=[];
-    function makePod(codice,tipo,indir,cons,pot){
-      return {tipo:tipo,codice:codice,indirizzo:indir,
-        fornitore_uscente:getVal(row,'fornitore_uscente'),fornitore_entrante:getVal(row,'fornitore_entrante'),
-        uso:'residenziale',tipo_op:normalTipoOp(getVal(row,'tipo_op')),
-        bolletta:getVal(row,'bolletta'),pagamento:getVal(row,'pagamento_mod'),
-        prezzo:getVal(row,'prezzo'),potenza:pot||'',consumo:cons||'',durata:'',
-        data_inizio:normalDate(getVal(row,'inizio')),data_scadenza:normalDate(getVal(row,'scadenza')),
-        data_attivazione:normalDate(getVal(row,'data_att_fornitura')),catastali:''};
+    var podsSeen={};
+    function addPod(codice,tipo,indir,fusc,fentr,finizio,fscad,fprezzo){
+      if(!codice)return;
+      var tp=tipo||(isPOD(codice)?'pod':isPDR(codice)?'pdr':null);
+      if(!tp||podsSeen[codice])return;
+      podsSeen[codice]={
+        tipo:tp,codice:codice,indirizzo:indir||'',
+        fornitore_uscente:fusc||'',fornitore_entrante:fentr||'',
+        uso:(getVal(pr,'tipo_cliente')||'').toLowerCase().indexOf('non')>=0?'non_residenziale':'residenziale',
+        tipo_op:normalTipoOp(getVal(pr,'tipo_op')),
+        bolletta:normalBoll(getVal(pr,'bolletta')),
+        pagamento:normalPag(getVal(pr,'pagamento_mod')),
+        prezzo:fprezzo||getVal(pr,'prezzo')||'',
+        potenza:'',consumo:'',durata:'',
+        data_inizio:normalDate(finizio||getVal(pr,'inizio')||''),
+        data_scadenza:normalDate(fscad||getVal(pr,'scadenza')||''),
+        data_attivazione:normalDate(getVal(pr,'data_att_fornitura')||''),
+        catastali:'',
+      };
     }
-    // POD luce (supporta colonne: Codice POD, Codice POD 2)
-    var podCod2=getVal(row,'pod2')||getVal(row,'pod 2');
-    var pdrCod2=getVal(row,'pdr2')||getVal(row,'pdr 2');
-    var indrEE=getVal(row,'indirizzo_fornitura')||getVal(row,'indirizzo_fornitura_ee');
-    var indrGas=getVal(row,'indirizzo_fornitura_gas')||indrEE;
-    if(podCod){pods.push(makePod(podCod,'pod',indrEE,getVal(row,'consumo'),getVal(row,'potenza')));}
-    if(podCod2){pods.push(makePod(podCod2,'pod',getVal(row,'indirizzo_fornitura_ee2')||'',getVal(row,'potenza2')||'',''));}
-    if(pdrCod){pods.push(makePod(pdrCod,'pdr',indrGas,getVal(row,'consumo_gas')||getVal(row,'consumo'),''));}
-    if(pdrCod2){pods.push(makePod(pdrCod2,'pdr',getVal(row,'indirizzo_fornitura_gas2')||'','',''));}
+    addPod(getVal(pr,'pod'),'pod',
+      getVal(pr,'indirizzo_fornitura_ee')||getVal(pr,'indirizzo_fornitura')||'',
+      getVal(pr,'fornitore_uscente_pod')||getVal(pr,'fornitore_uscente')||'',
+      getVal(pr,'fornitore_entrante_pod')||getVal(pr,'fornitore_entrante')||'',
+      getVal(pr,'inizio_pod'),getVal(pr,'scadenza_pod'),getVal(pr,'prezzo_pod'));
+    addPod(getVal(pr,'pod2'),'pod',
+      getVal(pr,'indirizzo_fornitura_ee2')||'',
+      getVal(pr,'fornitore_uscente_pod2')||'',getVal(pr,'fornitore_entrante_pod2')||'',
+      getVal(pr,'inizio_pod2'),getVal(pr,'scadenza_pod2'),getVal(pr,'prezzo_pod2'));
+    addPod(getVal(pr,'pdr'),'pdr',
+      getVal(pr,'indirizzo_fornitura_gas')||getVal(pr,'indirizzo_fornitura')||'',
+      getVal(pr,'fornitore_uscente_pdr1')||getVal(pr,'fornitore_uscente')||'',
+      getVal(pr,'fornitore_entrante_pdr1')||getVal(pr,'fornitore_entrante')||'',
+      getVal(pr,'inizio_pdr'),getVal(pr,'scadenza_pdr'),getVal(pr,'prezzo_pdr'));
+    addPod(getVal(pr,'pdr2'),'pdr',
+      getVal(pr,'indirizzo_fornitura_gas2')||'',
+      getVal(pr,'fornitore_uscente_pdr2')||'',getVal(pr,'fornitore_entrante_pdr2')||'',
+      getVal(pr,'inizio_pdr2'),getVal(pr,'scadenza_pdr2'),getVal(pr,'prezzo_pdr2'));
 
-    var boll = (function(){var b=getVal(row,'bolletta').toLowerCase();return b.indexOf('web')>=0?'web':b.indexOf('cart')>=0?'cartacea':'';})();
-    var pmod = (function(){var p=getVal(row,'pagamento_mod').toLowerCase();return p.indexOf('dom')>=0||p.indexOf('rid')>=0?'domiciliazione':p.indexOf('boll')>=0?'bollettino':p.indexOf('bon')>=0?'bonifico':'';})();
-    var pstat = (function(){var s=getVal(row,'pagamento_stato').toLowerCase();return s.indexOf('ko')>=0?'ko':s.indexOf('parz')>=0?'parziale':s.indexOf('attesa')>=0?'in-attesa':s.indexOf('pagat')>=0?'pagato':'';})();
-    var rec={
-      id:nextId++,nome:nome,tipo:tipo,
-      tipo_cliente:(getVal(row,'tipo_cliente')||tipoClienteDefault).indexOf('bus')>=0?'business':'residenziale',
-      cf:cf,piva:getVal(row,'piva'),ateco:getVal(row,'ateco'),
-      tel:tel,email:getVal(row,'email'),residenza:getVal(row,'residenza'),
-      data_nascita:normalDate(getVal(row,'data_nascita')),
-      luogo_nascita:getVal(row,'luogo_nascita'),
-      doc_tipo:getVal(row,'doc_tipo'),doc_num:getVal(row,'doc_num'),
-      doc_luogo:getVal(row,'doc_luogo'),
-      doc_emissione:normalDate(getVal(row,'doc_emissione')),
-      doc_scadenza:normalDate(getVal(row,'doc_scadenza')),
-      iban:getVal(row,'iban'),iban_int:getVal(row,'iban_int'),
-      fornitore:getVal(row,'fornitore'),
-      fornitore_uscente:getVal(row,'fornitore_uscente'),
-      fornitore_entrante:getVal(row,'fornitore_entrante'),
-      stato:normalStato(getVal(row,'stato')),
-      tipo_op:normalTipoOp(getVal(row,'tipo_op')),
-      valore:parseFloat(getVal(row,'valore'))||0,
-      prezzo:getVal(row,'prezzo'),
-      inizio:normalDate(getVal(row,'inizio')),
-      scadenza:normalDate(getVal(row,'scadenza')),
-      data_att_contratto:normalDate(getVal(row,'data_att_contratto')),
-      data_att_fornitura:normalDate(getVal(row,'data_att_fornitura')),
+    if(gruppo.righe.length>1){
+      gruppo.righe.forEach(function(row){
+        var cod=getVal(row,'pod');
+        if(!cod)return;
+        var tp=isPOD(cod)?'pod':isPDR(cod)?'pdr':null;
+        if(!tp||podsSeen[cod])return;
+        podsSeen[cod]={
+          tipo:tp,codice:cod,
+          indirizzo:getVal(row,'indirizzo_fornitura_ee')||getVal(row,'indirizzo_fornitura_gas')||getVal(row,'indirizzo_fornitura')||'',
+          fornitore_uscente:getVal(row,'fornitore_uscente')||'',
+          fornitore_entrante:getVal(row,'fornitore_entrante')||'',
+          uso:(getVal(row,'tipo_cliente')||'').toLowerCase().indexOf('non')>=0?'non_residenziale':'residenziale',
+          tipo_op:normalTipoOp(getVal(row,'tipo_op')),
+          bolletta:normalBoll(getVal(row,'bolletta')),
+          pagamento:normalPag(getVal(row,'pagamento_mod')),
+          prezzo:getVal(row,'prezzo')||'',potenza:'',consumo:'',durata:'',
+          data_inizio:normalDate(getVal(row,'data_att_fornitura')||getVal(row,'inizio')||''),
+          data_scadenza:normalDate(getVal(row,'scadenza')||''),
+          data_attivazione:normalDate(getVal(row,'data_att_fornitura')||''),
+          catastali:'',
+        };
+      });
+    }
+
+    var pods=Object.keys(podsSeen).map(function(k){return podsSeen[k];});
+    var hasPOD=pods.some(function(p){return p.tipo==='pod';});
+    var hasPDR=pods.some(function(p){return p.tipo==='pdr';});
+    var tipo=hasPOD&&hasPDR?'luce':hasPOD?'luce':hasPDR?'gas':tipoDefault;
+
+    var hasAnnull=gruppo.righe.some(function(r){
+      return(getVal(r,'tipo_op')||'').toLowerCase().indexOf('annull')>=0||(getVal(r,'stato')||'').toLowerCase().indexOf('annull')>=0;
+    });
+    if(hasAnnull)annullati++;
+
+    var boll0=normalBoll(getVal(pr,'bolletta'));
+    var pag0=normalPag(getVal(pr,'pagamento_mod'));
+    var pstat=(function(){var s=(getVal(pr,'pagamento_stato')||'').toLowerCase();return s.indexOf('ko')>=0?'ko':s.indexOf('parz')>=0?'parziale':s.indexOf('attesa')>=0?'in-attesa':s.indexOf('pagat')>=0?'pagato':'in-attesa';})();
+
+    var newVals={
+      tipo_cliente:(getVal(pr,'tipo_cliente')||tipoClienteDefault).toLowerCase().indexOf('bus')>=0?'business':'residenziale',
+      cf:cf,piva:getVal(pr,'piva'),ateco:getVal(pr,'ateco'),
+      tel:tel,email:getVal(pr,'email'),residenza:getVal(pr,'residenza'),
+      data_nascita:normalDate(getVal(pr,'data_nascita')),luogo_nascita:getVal(pr,'luogo_nascita'),
+      doc_tipo:getVal(pr,'doc_tipo'),doc_num:getVal(pr,'doc_num'),doc_luogo:getVal(pr,'doc_luogo'),
+      doc_emissione:normalDate(getVal(pr,'doc_emissione')),doc_scadenza:normalDate(getVal(pr,'doc_scadenza')),
+      iban:getVal(pr,'iban'),iban_int:getVal(pr,'iban_int'),pec:getVal(pr,'pec'),
+      fornitore:getVal(pr,'fornitore')||getVal(pr,'fornitore_entrante')||'',
+      stato:normalStato(getVal(pr,'stato')),tipo_op:normalTipoOp(getVal(pr,'tipo_op')),
+      valore:parseFloat(getVal(pr,'valore'))||0,prezzo:getVal(pr,'prezzo')||'',
+      inizio:normalDate(getVal(pr,'inizio')||getVal(pr,'data_att_fornitura')||''),
+      scadenza:normalDate(getVal(pr,'scadenza')||''),
+      data_att_contratto:normalDate(getVal(pr,'data_att_contratto')||getVal(pr,'inizio')||''),
+      data_att_fornitura:normalDate(getVal(pr,'data_att_fornitura')||''),
       pagamento_stato:pstat,
-      bolletta_luce:boll,pagamento_luce:pmod,
-      bolletta_gas:boll,pagamento_gas:pmod,
-      piano:getVal(row,'piano'),polizza:getVal(row,'polizza'),targa:getVal(row,'targa'),
-      note:getVal(row,'note'),
-      data_inserimento:new Date().toISOString().split('T')[0],
-      pods:pods,begas:[],
-      cat_foglio:getVal(row,'cat_foglio'),cat_particella:getVal(row,'cat_particella'),
-      cat_sub:getVal(row,'cat_sub'),cat_comune:'',cat_categoria:'',cat_reg:'',
+      bolletta_luce:boll0,pagamento_luce:pag0,bolletta_gas:boll0,pagamento_gas:pag0,
+      note:(hasAnnull?'⚠️ Riga Annullamento nel file fornitore. ':'')+getVal(pr,'note'),
     };
-    data.push(rec);
-    importati++;
+
+    if(dup){
+      // Cliente già presente → aggiorna solo i campi vuoti
+      if(mergeRecord(dup, newVals, pods)) aggiornati++;
+      else saltati++;
+    } else {
+      // Cliente nuovo → inserisci
+      var rec=Object.assign({
+        id:nextId++,nome:nome,tipo:tipo,
+        data_inserimento:new Date().toISOString().split('T')[0],
+        pods:pods,begas:[],
+        cat_foglio:getVal(pr,'cat_foglio'),cat_particella:getVal(pr,'cat_particella'),
+        cat_sub:getVal(pr,'cat_sub'),cat_comune:'',cat_categoria:'',cat_reg:'',
+      }, newVals);
+      data.push(rec);
+      importati++;
+    }
   });
 
   saveData();renderStats();renderTable();
   document.getElementById('import_step2').style.display='none';
   document.getElementById('import_btn').style.display='none';
   document.getElementById('import_step3').style.display='block';
-  document.getElementById('import_result_msg').textContent=importati+' contatti importati con successo!';
-  document.getElementById('import_result_sub').textContent=saltati?saltati+' record saltati (senza nome o duplicati)':'Nessun duplicato trovato.';
-  showToast('Importati '+importati+' contatti ✓');
+  var podCount=0;data.slice(-importati).forEach(function(r){podCount+=(r.pods||[]).length;});
+  var msgs=[];
+  if(importati) msgs.push(importati+' nuovi clienti importati');
+  if(aggiornati) msgs.push(aggiornati+' clienti aggiornati con i dati mancanti');
+  if(saltati) msgs.push(saltati+' già presenti e completi (nessuna modifica)');
+  document.getElementById('import_result_msg').textContent=msgs.join(' · ')||'Nessuna modifica.';
+  document.getElementById('import_result_sub').textContent=(podCount?'POD/PDR importati/aggiornati: '+podCount+'. ':'')+(annullati?annullati+' con nota annullamento.':'');
+  showToast((importati?importati+' importati ':'')+(aggiornati?aggiornati+' aggiornati ':'')+'✓');
 }
 
 function resetImport() {
@@ -2243,7 +2532,7 @@ function resetImport() {
 }
 
 // Click fuori per chiudere i modal
-['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+['newModal','detailModal','msgModal','printModal','importModal','restoreModal','exportModal'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('click',function(e){
     if(e.target===this){
@@ -2257,7 +2546,7 @@ function resetImport() {
 // Chiudi modal con tasto ESC
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
-    ['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+    ['newModal','detailModal','msgModal','printModal','importModal','restoreModal','exportModal'].forEach(function(id){
       var el=document.getElementById(id);
       if(el) el.classList.remove('open');
     });
@@ -2265,7 +2554,7 @@ document.addEventListener('keydown',function(e){
 });
 
 // Chiudi tutti i modal all'avvio (sicurezza)
-['newModal','detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+['newModal','detailModal','msgModal','printModal','importModal','restoreModal','exportModal'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.classList.remove('open');
 });
