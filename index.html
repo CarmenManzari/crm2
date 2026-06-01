@@ -170,6 +170,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 .d-alert-bar.scad{background:#FAEAE8;color:#7C1A1A;display:block}
 .d-alert-bar.warn{background:#FDF4DC;color:#6B4800;display:block}
 .d-alert-bar.ok{background:#EAF3DE;color:#2F5038;display:block}
+.d-alert-bar.multi{background:#F0E8FA;color:#4A1A7C;display:flex;flex-direction:column;gap:3px;padding:8px 24px}
 /* Tabs navigazione */
 .d-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface2);padding:0 16px}
 .d-tab{padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#887860;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
@@ -235,6 +236,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -252,12 +254,14 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <button class="nav-btn active" id="nav_all" onclick="setTab('all',this)"><span class="icon">📋</span> Tutti i contratti</button>
     <button class="nav-btn" id="nav_luce" onclick="setTab('luce',this)"><span class="icon">⚡</span> Luce</button>
     <button class="nav-btn" id="nav_gas" onclick="setTab('gas',this)"><span class="icon">🔥</span> Gas</button>
+    <button class="nav-btn" id="nav_dual" onclick="setTab('dual',this)"><span class="icon">⚡🔥</span> Dual</button>
     <button class="nav-btn" id="nav_tel" onclick="setTab('tel',this)"><span class="icon">📱</span> Telefonia</button>
     <button class="nav-btn" id="nav_ass" onclick="setTab('ass',this)"><span class="icon">🛡</span> Assicurazioni</button>
     <button class="nav-btn" id="nav_auto" onclick="setTab('auto',this)"><span class="icon">🚗</span> Noleggio Auto</button>
     <div class="nav-label">Gestione</div>
     <button class="nav-btn" id="nav_beghe" onclick="setTab('beghe',this)"><span class="icon">⚠️</span> Pratiche aperte</button>
     <button class="nav-btn" onclick="openOfferte()"><span class="icon">📊</span> Offerte</button>
+    <button class="nav-btn" onclick="openRiepilogoGettoni()"><span class="icon">🎫</span> Riepilogo gettoni</button>
   </nav>
   <div class="sidebar-footer">
     <button class="nav-btn" onclick="openNew()"><span class="icon">➕</span> Nuovo contratto</button>
@@ -313,7 +317,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
       <option value="qualsiasi">📁 Tutti con pratiche</option>
     </select>
     <select id="finserito" onchange="renderTable()" style="min-width:130px">
-      <option value="">📅 Tutti i mesi</option>
+      <option value="">📅 Tutti i mesi (firma)</option>
     </select>
   </div>
 
@@ -340,6 +344,34 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 
 
 <!-- ===== MODAL OFFERTE ===== -->
+<div class="modal-bg" id="riepilogoGettoniModal">
+  <div class="modal" style="max-width:700px;max-height:85vh;overflow-y:auto">
+    <div class="modal-header">
+      <div class="modal-title">🎫 Riepilogo gettoni mensile</div>
+      <button class="modal-close" onclick="document.getElementById('riepilogoGettoniModal').classList.remove('open')">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <input type="month" id="rg_mese" style="font-size:13px;padding:5px 10px;border:1px solid #ddd;border-radius:6px" onchange="renderRiepilogoGettoni()">
+      <select id="rg_categoria" style="font-size:12px;padding:5px 10px;border:1px solid #ddd;border-radius:6px" onchange="renderRiepilogoGettoni()">
+        <option value="">Tutte le categorie</option>
+        <option>Residenziale</option><option>Business</option><option>Assicurazione</option>
+        <option>Fotovoltaico</option><option>Noleggio</option><option>Altro</option>
+      </select>
+      <select id="rg_stato" style="font-size:12px;padding:5px 10px;border:1px solid #ddd;border-radius:6px" onchange="renderRiepilogoGettoni()">
+        <option value="">Tutti gli stati</option>
+        <option value="da_pagare">⏳ Da pagare</option>
+        <option value="pagato">✅ Pagato</option>
+        <option value="ko">❌ KO</option>
+      </select>
+    </div>
+    <div id="rg_totali" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <div id="rg_lista"></div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-secondary" onclick="document.getElementById('riepilogoGettoniModal').classList.remove('open')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="offerteModal">
 <div class="modal" style="max-width:700px">
   <h2>📊 Gestione Offerte</h2>
@@ -359,7 +391,37 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <input id="off_fornitore" type="text" placeholder="Fornitore (es. Acea, Enel...)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
     <input id="off_nome" type="text" placeholder="Nome offerta (es. Acea Fix 12M)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
     <input id="off_prezzo" type="text" placeholder="Prezzo (es. 0,07 €/kWh)" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;flex:1;font-family:Arial">
-    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="aggiungiOfferta()">+ Aggiungi</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;align-items:center;gap:4px">
+      <label style="font-size:11px;color:#666;white-space:nowrap">Sconto €</label>
+      <input id="off_sconto_euro" type="number" step="0.01" min="0" placeholder="Es. 50" style="font-size:12px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;width:80px;font-family:Arial">
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label style="font-size:11px;color:#666;white-space:nowrap">Sconto %</label>
+      <input id="off_sconto_perc" type="number" step="0.01" min="0" max="100" placeholder="Es. 10" style="font-size:12px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;width:75px;font-family:Arial">
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label style="font-size:11px;color:#666;white-space:nowrap">RID obbl.</label>
+      <select id="off_rid" style="font-size:12px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-family:Arial">
+        <option value="">–</option>
+        <option value="si">✅ Sì</option>
+        <option value="no">❌ No</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label style="font-size:11px;color:#666;white-space:nowrap">Boll. web obbl.</label>
+      <select id="off_bollweb" style="font-size:12px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-family:Arial">
+        <option value="">–</option>
+        <option value="si">✅ Sì</option>
+        <option value="no">❌ No</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label style="font-size:11px;color:#666;white-space:nowrap">Scad. promo</label>
+      <input id="off_scad_promo" type="date" style="font-size:12px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-family:Arial">
+    </div>
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;margin-left:auto" onclick="aggiungiOfferta()">+ Aggiungi</button>
   </div>
 
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="off_filtri">
@@ -378,6 +440,11 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
           <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Fornitore</th>
           <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Nome offerta</th>
           <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Prezzo</th>
+          <th style="padding:8px 10px;text-align:center;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Sconto €</th>
+          <th style="padding:8px 10px;text-align:center;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Sconto %</th>
+          <th style="padding:8px 10px;text-align:center;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">RID</th>
+          <th style="padding:8px 10px;text-align:center;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Boll. web</th>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Scad. promo</th>
           <th style="padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee">Azioni</th>
         </tr>
       </thead>
@@ -454,12 +521,16 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
       <div class="form-group"><label>Tipo servizio *</label>
         <select id="f_tipo" onchange="toggleExtraContract()">
           <option value="">-- Seleziona --</option>
-          <option value="luce">⚡ Luce</option><option value="gas">🔥 Gas</option>
-          <option value="tel">📱 Telefonia</option><option value="ass">🛡 Assicurazione</option>
+          <option value="luce">⚡ Luce</option>
+          <option value="gas">🔥 Gas</option>
+          <option value="dual">⚡🔥 Dual (Luce + Gas)</option>
+          <option value="tel">📱 Telefonia</option>
+          <option value="ass">🛡 Assicurazione</option>
           <option value="auto">🚗 Noleggio Auto</option>
         </select>
       </div>
       <div class="form-group"><label>Fornitore</label><input id="f_fornitore" type="text" placeholder="Es. Enel, Edison, TIM..."></div>
+      <div class="form-group"><label>Codice contratto</label><input id="f_codice_contratto" type="text" placeholder="Es. ENL-2024-12345"></div>
       <div class="form-group"><label>Stato pratica</label>
         <select id="f_stato">
           <option>Proposta</option><option>In lavorazione</option>
@@ -468,8 +539,8 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
       </div>
       <div class="form-group"><label>Data inizio</label><input id="f_inizio" type="date"></div>
       <div class="form-group"><label>Data scadenza</label><input id="f_scadenza" type="date"></div>
-      <div class="form-group"><label>Data att. contratto</label><input id="f_data_att_contratto" type="date"></div>
-      <div class="form-group"><label>Data att. fornitura</label><input id="f_data_att_fornitura" type="date"></div>
+      <div class="form-group"><label>⚡ Data att. fornitura Luce</label><input id="f_data_att_fornitura_luce" type="date"></div>
+      <div class="form-group"><label>🔥 Data att. fornitura Gas</label><input id="f_data_att_fornitura_gas" type="date"></div>
       <div class="form-group"><label>Tipo operazione</label>
         <select id="f_tipo_op" onchange="toggleCatastali()">
           <option value="">-- Seleziona --</option>
@@ -481,6 +552,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
         </select>
       </div>
       <div class="form-group"><label>Valore mensile (€)</label><input id="f_valore" type="number" step="0.01" placeholder="0.00"></div>
+
       <div class="form-group"><label>Stato pagamento</label>
         <select id="f_pagamento_stato">
           <option value="">-- Seleziona --</option>
@@ -488,6 +560,22 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
           <option value="ko">❌ Non pagato / KO</option>
           <option value="parziale">⚠️ Parziale</option>
           <option value="in-attesa">⏳ In attesa</option>
+        </select>
+      </div>
+      <div class="form-group"><label>🖊 Conferma contratto</label>
+        <select id="f_conferma_contratto">
+          <option value="">-- Seleziona --</option>
+          <option value="da_confermare">⏳ Da confermare</option>
+          <option value="confermato">✅ Confermato</option>
+          <option value="rifiutato">❌ Rifiutato</option>
+        </select>
+      </div>
+      <div class="form-group"><label>📞 Quality call fornitore</label>
+        <select id="f_quality_call">
+          <option value="">-- Seleziona --</option>
+          <option value="da_effettuare">⏳ Da effettuare</option>
+          <option value="risposto">✅ Risposto</option>
+          <option value="non_risposto">🔁 Non risposto / Da richiamare</option>
         </select>
       </div>
     </div>
@@ -545,6 +633,34 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <div class="form-grid">
       <div class="form-group full"><textarea id="f_note" placeholder="Note aggiuntive, condizioni speciali..."></textarea></div>
     </div>
+
+  <!-- ALTRI SERVIZI -->
+  <div style="height:1px;background:#e8e8e8;margin:14px 0 10px"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;color:#333">➕ Altri servizi del cliente</div>
+    <select id="new_servizio_tipo" style="font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:6px">
+      <option value="">-- Tipo servizio --</option>
+      <option value="tel">📱 Telefonia</option>
+      <option value="fotovoltaico">☀️ Fotovoltaico</option>
+      <option value="ass">🛡 Assicurazione</option>
+      <option value="auto">🚗 Noleggio Auto</option>
+      <option value="altro">📦 Altro servizio</option>
+    </select>
+    <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="addServizio()">+ Aggiungi</button>
+  </div>
+  <div id="servizi_list"></div>
+  <div id="servizi_empty" style="text-align:center;padding:1rem;color:#bbb;font-size:12px">Nessun servizio aggiuntivo — usa il menu sopra per aggiungere Telefonia, Fotovoltaico, ecc.</div>
+
+
+  <!-- GETTONI -->
+  <div style="height:1px;background:#e8e8e8;margin:14px 0 10px"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;color:#333">🎫 Gettoni da fatturare</div>
+    <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="addGettone()">+ Aggiungi gettone</button>
+  </div>
+  <div id="gettoni_list"></div>
+  <div id="gettoni_empty" style="text-align:center;padding:.8rem;color:#bbb;font-size:12px">Nessun gettone — clicca + Aggiungi per inserirne uno</div>
+
   <div style="height:1px;background:#e8e8e8;margin:10px 0"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:12px;color:#888">Aggiungi tutti i punti di fornitura del cliente</div>
@@ -584,6 +700,8 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <div class="d-tab" onclick="switchDTab(1,this)">👤 Cliente</div>
     <div class="d-tab" onclick="switchDTab(2,this)">⚡ POD / PDR</div>
     <div class="d-tab" onclick="switchDTab(3,this)">⚠️ Pratiche</div>
+    <div class="d-tab" onclick="switchDTab(4,this)">➕ Altri servizi</div>
+    <div class="d-tab" onclick="switchDTab(5,this)">🎫 Gettoni</div>
   </div>
   <!-- BODY -->
   <div class="d-body">
@@ -591,6 +709,8 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <div class="d-panel" id="dp1"></div>
     <div class="d-panel" id="dp2"></div>
     <div class="d-panel" id="dp3"></div>
+    <div class="d-panel" id="dp4"></div>
+    <div class="d-panel" id="dp5"></div>
   </div>
   <!-- FOOTER -->
   <div class="d-footer">
@@ -598,6 +718,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <button class="btn btn-orange" onclick="openPrint()">🖨 Stampa</button>
     <button class="btn btn-green" onclick="openMessages()">💬 Messaggi</button>
     <button class="btn" style="background:#E8F1FA;color:#1A4A7C;border-color:#A8C8E8" onclick="openLettere()">📄 Lettere</button>
+    <button class="btn" style="background:#F0EAFB;color:#4A1A8C;border-color:#C8A8E8" onclick="copiaAnagrafica()" title="Apre un nuovo contratto pre-compilato con i dati anagrafici di questo cliente">👥 Copia anagrafica</button>
     <button class="btn btn-secondary" onclick="closeDetail()">Chiudi</button>
     <button class="btn btn-primary" onclick="editFromDetail()">✏ Modifica</button>
   </div>
@@ -819,6 +940,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
     <textarea id="msg_text" style="width:100%;height:220px;font-size:12px;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:Arial,sans-serif;resize:vertical;line-height:1.6"></textarea>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
       <div style="font-size:10px;color:#aaa">Puoi modificare il testo — clicca Salva per ricordarlo</div>
+      <button class="btn" style="font-size:11px;padding:3px 10px;background:#FFF0F0;color:#8B1A1A;border:1px solid #FFBBBB" onclick="cancellaTemplateMsg()">🗑️ Cancella template salvato</button>
       <button class="btn" style="font-size:11px;padding:3px 10px;background:#EAF3DE;color:#27500A;border:1px solid #C0DD97" onclick="salvaTemplateMsg()">💾 Salva modifiche</button>
     </div>
   </div>
@@ -877,6 +999,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 var syncEnabled = true;
+
+// Auth anonima automatica — rende il database sicuro
+firebase.auth().signInAnonymously().catch(function(err) {
+  console.error("Errore auth anonima:", err);
+});
 var unsubscribe = null;
 
 // Salva su Firestore
@@ -962,8 +1089,8 @@ function showSyncStatus(stato) {
   if (stato === 'err')     { el.innerHTML = '🔴 Offline (locale)'; el.style.color = '#E8A090'; }
 }
 
-const TIPOLABEL={luce:'Luce',gas:'Gas',tel:'Telefonia',ass:'Assicurazioni',auto:'Noleggio Auto'};
-const TIPOICON={luce:'⚡',gas:'🔥',tel:'📱',ass:'🛡',auto:'🚗'};
+const TIPOLABEL={luce:'Luce',gas:'Gas',dual:'Dual Luce+Gas',tel:'Telefonia',ass:'Assicurazioni',auto:'Noleggio Auto'};
+const TIPOICON={luce:'⚡',gas:'🔥',dual:'⚡🔥',tel:'📱',ass:'🛡',auto:'🚗'};
 const TIPOCOLORS={
   luce:{bg:'#E6F1FB',color:'#0C447C'},gas:{bg:'#EAF3DE',color:'#27500A'},
   tel:{bg:'#FCEBEB',color:'#791F1F'},ass:{bg:'#FAEEDA',color:'#633806'},auto:{bg:'#EEEDFE',color:'#26215C'}
@@ -987,12 +1114,201 @@ function daysDiff(s){if(!s)return null;const d=new Date(s),n=new Date();n.setHou
 function fmtDate(s){if(!s)return '-';return new Date(s).toLocaleDateString('it-IT');}
 function initials(n){const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.substring(0,2).toUpperCase();}
 
+/* ===================================================
+   DECODIFICA CODICE FISCALE (inverso)
+   =================================================== */
+const CF_MESI = {A:1,B:2,C:3,D:4,E:5,H:6,L:7,M:8,P:9,R:10,S:11,T:12};
+const CF_COMUNI = {}; // popolato lazy dal file belfiore se presente, altrimenti solo codice
+function decodeCF(cf){
+  cf = (cf||'').toUpperCase().replace(/\s/g,'');
+  if(cf.length!==16) return null;
+  try{
+    // Sesso e data nascita
+    const aaRaw = cf.substring(6,8);
+    const meseLetter = cf.charAt(8);
+    const ggRaw = parseInt(cf.substring(9,11),10);
+    const sesso = ggRaw > 40 ? 'F' : 'M';
+    const gg = sesso==='F' ? ggRaw-40 : ggRaw;
+    const meseNum = CF_MESI[meseLetter];
+    if(!meseNum) return null;
+    const aa = parseInt(aaRaw,10);
+    // Stima anno: se aa<=currentYear%100 → 2000+aa, altrimenti 1900+aa
+    const curY = new Date().getFullYear()%100;
+    const anno = aa <= curY ? 2000+aa : 1900+aa;
+    const ggPad = String(gg).padStart(2,'0');
+    const mmPad = String(meseNum).padStart(2,'0');
+    const dataNascita = `${anno}-${mmPad}-${ggPad}`;
+    // Codice comune/stato estero
+    const codComune = cf.substring(11,15);
+    return { dataNascita, sesso, codComune };
+  } catch(e){ return null; }
+}
+
+function onCFInput(){
+  const cf = (document.getElementById('f_cf').value||'').toUpperCase().replace(/\s/g,'');
+  document.getElementById('f_cf').value = cf;
+  if(cf.length !== 16) return;
+  const dec = decodeCF(cf);
+  if(!dec) return;
+  // Compila data nascita solo se vuota
+  const elData = document.getElementById('f_data_nascita');
+  if(!elData.value) elData.value = dec.dataNascita;
+  // Cerca il comune via API Belfiore (ISTAT) → Nominatim fallback
+  lookupComuneBelfiore(dec.codComune, function(nomeComune){
+    const elLuogo = document.getElementById('f_luogo_nascita');
+    if(!elLuogo.value && nomeComune) elLuogo.value = nomeComune;
+  });
+  showToast('CF decodificato ✓');
+}
+
+function lookupComuneBelfiore(codice, cb){
+  // Usa un mini-lookup locale dei codici più comuni + fallback Wikipedia/Wikidata
+  const comuni = {
+    'A001':'Abano Terme (PD)','A662':'Bari (BA)','A883':'Barletta (BT)',
+    'F205':'Milano (MI)','H501':'Roma (RM)','L736':'Torino (TO)',
+    'C351':'Catania (CT)','D612':'Firenze (FI)','L483':'Taranto (TA)',
+    'A271':'Agrigento (AG)','A794':'Avellino (AV)',
+    'B157':'Benevento (BN)','B519':'Bologna (BO)','B649':'Brescia (BS)',
+    'B963':'Brindisi (BR)','C067':'Cagliari (CA)','C129':'Caltanissetta (CL)',
+    'C352':'Catanzaro (CZ)','D086':'Cosenza (CS)','D122':'Cremona (CR)',
+    'D331':'Crotone (KR)','D451':'Cuneo (CN)','D643':'Foggia (FG)',
+    'D969':'Frosinone (FR)','E098':'Genova (GE)','E243':'Gorizia (GO)',
+    'E456':'Grosseto (GR)','E472':'Imperia (IM)','E335':'Isernia (IS)',
+    'E514':'L\'Aquila (AQ)','F631':'Napoli (NA)','F839':'Novara (NO)',
+    'G273':'Palermo (PA)','G337':'Parma (PR)','G388':'Pavia (PV)',
+    'G453':'Perugia (PG)','G454':'Pesaro (PU)','G482':'Pescara (PE)',
+    'G535':'Piacenza (PC)','G560':'Pisa (PI)','G672':'Potenza (PZ)',
+    'G693':'Ragusa (RG)','H294':'Reggio Calabria (RC)','H224':'Reggio Emilia (RE)',
+    'H354':'Rieti (RI)','H612':'Rovigo (RO)',
+    'H703':'Salerno (SA)','H862':'Sassari (SS)','I628':'Siena (SI)',
+    'I622':'Siracusa (SR)','I804':'Sondrio (SO)','L049':'Teramo (TE)',
+    'L117':'Terni (TR)','L400':'Trapani (TP)','L424':'Trento (TN)',
+    'L781':'Trieste (TS)','L952':'Udine (UD)','L949':'Varese (VA)',
+    'M082':'Venezia (VE)','M100':'Verbania (VB)','M109':'Vercelli (VC)',
+    'M218':'Verona (VR)','M262':'Vibo Valentia (VV)','M305':'Vicenza (VI)',
+    'M331':'Viterbo (VT)','A345':'Andria (BT)','C975':'Corato (BA)',
+    'F262':'Mola di Bari (BA)','F284':'Monopoli (BA)','F376':'Noci (BA)',
+    'G787':'Putignano (BA)','L109':'Terlizzi (BA)','L220':'Toritto (BA)',
+    'A055':'Alberobello (BA)','A225':'Altamura (BA)','B893':'Bitonto (BA)',
+    'B716':'Capurso (BA)','B923':'Casamassima (BA)',
+    'Z100':'Francia','Z112':'Germania','Z114':'Gran Bretagna',
+    'Z115':'Grecia','Z123':'Svizzera','Z131':'Austria','Z133':'Belgio',
+    'Z136':'Olanda','Z140':'Portogallo','Z148':'Spagna','Z154':'Svezia',
+    'Z158':'Turchia','Z401':'Albania','Z111':'Danimarca','Z160':'Ucraina',
+    'Z155':'Romania','Z139':'Polonia','Z102':'Bulgaria','Z103':'Bielorussia'
+  };
+  if(comuni[codice]){ cb(comuni[codice]); return; }
+  // Se non trovato nel dizionario locale, prova API ANPR
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(codice)+'&format=json&limit=1&countrycodes=it',
+    {headers:{'Accept-Language':'it','User-Agent':'CRM-Energia/1.0'}})
+    .then(r=>r.json()).then(d=>{ cb(d&&d[0]?d[0].display_name:''); })
+    .catch(()=>{ cb(''); });
+}
+
+/* ===================================================
+   AUTOCOMPLETE FORNITORI
+   =================================================== */
+const FORNITORI_BASE = [
+  'Acea Energia','A2A Energia','Alperia','Axpo',
+  'Edison Energia','Enel Energia','Eni Plenitude','E.ON',
+  'Engie','Estra','Flelectra','Gala',
+  'Green Network','Hera Comm','Illumia','Italgas',
+  'Iren Mercato','Octopus Energy','Repower','Sev',
+  'Sorgenia','Tate Luce e Gas','Wekiwi','Bluenergy',
+  'Dolomiti Energia','Unareti','2i Rete Gas','TIM','Vodafone','WindTre','Iliad'
+];
+
+function buildForniториDatalist(){
+  const usati = new Set();
+  data.forEach(r=>{
+    if(r.fornitore) usati.add(r.fornitore);
+    (r.pods||[]).forEach(p=>{
+      if(p.fornitore_uscente) usati.add(p.fornitore_uscente);
+      if(p.fornitore_entrante) usati.add(p.fornitore_entrante);
+    });
+  });
+  const tutti = Array.from(new Set([...FORNITORI_BASE, ...usati])).sort();
+  let dl = document.getElementById('dl_fornitori');
+  if(!dl){ dl=document.createElement('datalist'); dl.id='dl_fornitori'; document.body.appendChild(dl); }
+  dl.innerHTML = tutti.map(f=>`<option value="${f}">`).join('');
+}
+
+function attachForniториAutocomplete(){
+  buildForniториDatalist();
+  ['f_fornitore'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && !el.getAttribute('list')){ el.setAttribute('list','dl_fornitori'); }
+  });
+  // Anche nei pod dinamici viene gestito via renderPodsUI
+}
+
+/* ===================================================
+   AUTOCOMPLETE INDIRIZZI (OpenStreetMap Nominatim)
+   =================================================== */
+let _addrTimer = null;
+let _addrDropdown = null;
+
+function setupAddressAutocomplete(inputId){
+  const inp = document.getElementById(inputId);
+  if(!inp || inp.dataset.osmReady) return;
+  inp.dataset.osmReady = '1';
+  inp.setAttribute('autocomplete','off');
+
+  // Crea dropdown
+  const drop = document.createElement('div');
+  drop.style.cssText = 'position:absolute;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;width:100%;font-size:12px;display:none';
+  inp.parentElement.style.position='relative';
+  inp.parentElement.appendChild(drop);
+  _addrDropdown = drop;
+
+  inp.addEventListener('input', function(){
+    clearTimeout(_addrTimer);
+    const q = inp.value.trim();
+    if(q.length < 4){ drop.style.display='none'; return; }
+    _addrTimer = setTimeout(function(){
+      fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=6&countrycodes=it&addressdetails=1',
+        {headers:{'Accept-Language':'it','User-Agent':'CRM-Energia/1.0'}})
+        .then(r=>r.json())
+        .then(function(results){
+          if(!results.length){ drop.style.display='none'; return; }
+          drop.innerHTML = results.map(function(res){
+            const a = res.address||{};
+            // Via + civico
+            const via = [a.road, a.house_number].filter(Boolean).join(' ');
+            const cap = a.postcode||'';
+            const comune = a.city||a.town||a.village||a.municipality||a.hamlet||a.suburb||a.quarter||a.neighbourhood||a.county_seat||'';
+            // Provincia: prima cerca la sigla ISO (IT-BA → BA), poi county abbreviato
+            var prov = '';
+            var iso = a['ISO3166-2-lvl6']||a['ISO3166-2-lvl5']||'';
+            if(iso){ prov = iso.replace(/^IT-/,''); }
+            else {
+              // Fallback: prendi le prime 2 lettere maiuscole del county se sembra un nome
+              var c = a.county||a.state_district||'';
+              // Mappa province italiane comuni
+              var match = c.match(/\b([A-Z]{2})\b/);
+              if(match) prov = match[1];
+              else if(c) prov = c.substring(0,2).toUpperCase();
+            }
+            const label = [via, [cap, comune].filter(Boolean).join(' '), prov ? '('+prov+')' : ''].filter(s=>s&&s.trim()).join(', ');
+            return `<div style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;line-height:1.3" 
+              onmousedown="document.getElementById('${inputId}').value='${label.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';document.getElementById('${inputId}').dispatchEvent(new Event('change'));document.getElementById('${inputId}').parentElement.querySelector('div[style*=absolute]').style.display='none'">${label||res.display_name}</div>`;
+          }).join('');
+          drop.style.display='block';
+        })
+        .catch(function(){ drop.style.display='none'; });
+    }, 500);
+  });
+
+  inp.addEventListener('blur', function(){ setTimeout(function(){ drop.style.display='none'; },200); });
+}
+
 function renderStats(){
   const el=document.getElementById('stats');
-  const c={luce:0,gas:0,tel:0,ass:0,auto:0};
+  const c={luce:0,gas:0,dual:0,tel:0,ass:0,auto:0};
   let scad=0,beghe=0,ko=0,attesa=0;
   data.forEach(r=>{
-    c[r.tipo]++;
+    if(r.tipo==='dual'){c.dual++;c.luce++;c.gas++;}
+    else if(c[r.tipo]!==undefined) c[r.tipo]++;
     const d=daysDiff(r.scadenza);if(d!==null&&d>=0&&d<=30)scad++;
     (r.pods||[]).forEach(p=>{const dp=daysDiff(p.data_scadenza);if(dp!==null&&dp>=0&&dp<=30)scad++;});
     beghe+=(r.begas||[]).filter(b=>b.stato==='aperta').length;
@@ -1003,6 +1319,7 @@ function renderStats(){
     <div class="stat"><div class="stat-label">Totale</div><div class="stat-val" style="color:#1a1a1a">${data.length}</div></div>
     <div class="stat luce"><div class="stat-label">⚡ Luce</div><div class="stat-val">${c.luce}</div></div>
     <div class="stat gas"><div class="stat-label">🔥 Gas</div><div class="stat-val">${c.gas}</div></div>
+    <div class="stat" style="background:#E8F4FD;"><div class="stat-label" style="color:#0C447C">⚡🔥 Dual</div><div class="stat-val" style="color:#0C447C">${c.dual}</div></div>
     <div class="stat tel"><div class="stat-label">📱 Tel.</div><div class="stat-val">${c.tel}</div></div>
     <div class="stat ass"><div class="stat-label">🛡 Ass.</div><div class="stat-val">${c.ass}</div></div>
     <div class="stat auto"><div class="stat-label">🚗 Auto</div><div class="stat-val">${c.auto}</div></div>
@@ -1025,8 +1342,11 @@ function renderTable(){
   (function(){
     const sel=document.getElementById('finserito'), cur=sel.value;
     const mesi=new Set();
-    data.forEach(r=>{ if(r.data_inserimento) mesi.add(r.data_inserimento.slice(0,7)); });
-    sel.innerHTML='<option value="">📅 Tutti i mesi</option>';
+    data.forEach(r=>{
+      const df = r.inizio || r.data_inserimento;
+      if(df) mesi.add(df.slice(0,7));
+    });
+    sel.innerHTML='<option value="">📅 Tutti i mesi (firma)</option>';
     Array.from(mesi).sort().reverse().forEach(m=>{
       const [y,mo]=m.split('-');
       const label=new Date(y,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});
@@ -1036,7 +1356,11 @@ function renderTable(){
   // beghe tab: show all service types but filter by pratiche
   const isBegheTab = activeTab==='beghe';
   let rows=data.filter(r=>{
-    if(!isBegheTab && activeTab!=='all'&&r.tipo!==activeTab)return false;
+    if(!isBegheTab && activeTab!=='all'){
+      if(activeTab==='luce' && r.tipo!=='luce' && r.tipo!=='dual') return false;
+      else if(activeTab==='gas' && r.tipo!=='gas' && r.tipo!=='dual') return false;
+      else if(activeTab!=='luce' && activeTab!=='gas' && r.tipo!==activeTab) return false;
+    }
     if(fstato&&r.stato!==fstato)return false;
     if(ftc&&r.tipo_cliente!==ftc)return false;
     if(fscad){const d=daysDiff(r.scadenza);if(d===null||d<0||d>parseInt(fscad))return false;}
@@ -1052,7 +1376,7 @@ function renderTable(){
     else if(fbeghe==='qualsiasi'){if(!(r.begas||[]).length)return false;}
     // tab pratiche: mostra solo chi ha pratiche aperte
     if(fpagamento&&r.pagamento_stato!==fpagamento)return false;
-    if(finserito&&(!r.data_inserimento||r.data_inserimento.slice(0,7)!==finserito))return false;
+    if(finserito){const df=r.inizio||r.data_inserimento||'';if(!df||df.slice(0,7)!==finserito)return false;}
     if(isBegheTab){const ba=(r.begas||[]).filter(b=>b.stato==='aperta').length;if(!ba)return false;}
     return true;
   });
@@ -1062,7 +1386,11 @@ function renderTable(){
   tb.innerHTML=rows.map(r=>{
     const isBegheTab = activeTab==='beghe';
     const scadToShow = r.scadenza || (r.pods&&r.pods[0]?r.pods[0].data_scadenza:'');
-    const d=daysDiff(scadToShow);
+    // Calcola colore allerta considerando TUTTE le scadenze dei POD/PDR
+    const allScadenze = [r.scadenza, ...((r.pods||[]).map(p=>p.data_scadenza))].filter(Boolean);
+    const allDays = allScadenze.map(s=>daysDiff(s)).filter(v=>v!==null);
+    const minDays = allDays.length ? Math.min(...allDays) : null;
+    const d = minDays;
     let sc='color:#1a1a1a';
     if(d!==null&&d>=0&&d<=30)sc='color:#633806;font-weight:700';
     if(d!==null&&d<0)sc='color:#791F1F;font-weight:700';
@@ -1072,6 +1400,8 @@ function renderTable(){
     const displayScadenza = r.scadenza || (r.pods&&r.pods[0]?r.pods[0].data_scadenza:'');
     const beghe_aperte=(r.begas||[]).filter(b=>b.stato==='aperta').length;
     const tc_badge=r.tipo_cliente==='business'?`<span style="font-size:9px;background:#2F3D2A;color:#C8E8A8;border-radius:3px;padding:1px 5px;vertical-align:middle">BIZ</span>`:'';
+    const conf_badge=r.conferma_contratto==='da_confermare'?`<span title="Contratto da confermare" style="font-size:9px;background:#EAE8FA;color:#2A2060;border-radius:10px;padding:1px 5px">🖊</span>`:r.conferma_contratto==='rifiutato'?`<span title="Contratto rifiutato" style="font-size:9px;background:#FAEAE8;color:#7C1A1A;border-radius:10px;padding:1px 5px">❌</span>`:'';
+    const qc_badge=r.quality_call==='da_effettuare'?`<span title="Quality call da effettuare" style="font-size:9px;background:#FDF4DC;color:#6B4800;border-radius:10px;padding:1px 5px">📞</span>`:r.quality_call==='non_risposto'?`<span title="Quality call: non risposto" style="font-size:9px;background:#FDF4DC;color:#6B4800;border-radius:10px;padding:1px 5px">🔁</span>`:'';
     // bega summary for pratiche tab
     const begaList=(r.begas||[]).filter(b=>b.stato==='aperta');
     const begaSummary = isBegheTab && begaList.length
@@ -1079,12 +1409,12 @@ function renderTable(){
       : '';
     return `<tr onclick="openDetail(${r.id})" data-id="${r.id}">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-id="${r.id}" onchange="aggiornaSelzione()" style="cursor:pointer"></td>
-      <td title="${r.nome}"><strong>${r.nome}</strong> ${tc_badge}${beghe_aperte?` <span style="font-size:9px;background:#FCEBEB;color:#791F1F;border-radius:10px;padding:1px 5px">${beghe_aperte}⚠</span>`:''}</td>
+      <td title="${r.nome}"><strong>${r.nome}</strong> ${tc_badge}${conf_badge}${qc_badge}${beghe_aperte?` <span style="font-size:9px;background:#FCEBEB;color:#791F1F;border-radius:10px;padding:1px 5px">${beghe_aperte}⚠</span>`:''}</td>
       <td>${r.tipo_cliente==='business'?'🏢':'👤'}</td>
       <td>${(()=>{
         const hasPod=(r.pods||[]).some(p=>p.tipo==='pod');
         const hasPdr=(r.pods||[]).some(p=>p.tipo==='pdr');
-        if(hasPod&&hasPdr) return '<span class="badge luce">⚡ Luce</span> <span class="badge gas">🔥 Gas</span>';
+        if(r.tipo==='dual'||hasPod&&hasPdr) return '<span class="badge luce">⚡ Luce</span> <span class="badge gas">🔥 Gas</span>';
         return '<span class="badge '+r.tipo+'">'+(TIPOICON[r.tipo]||'')+' '+(TIPOLABEL[r.tipo]||r.tipo)+'</span>';
       })()}</td>
       <td>${(()=>{
@@ -1098,18 +1428,49 @@ function renderTable(){
       <td><span class="badge ${sl}">${r.stato}</span></td>
       <td style="${isBegheTab?'':''+sc}">${(()=>{
         if(isBegheTab) return begaSummary;
-        const pod=(r.pods||[]).find(p=>p.tipo==='pod');
-        const pdr=(r.pods||[]).find(p=>p.tipo==='pdr');
-        const hasDual = pod&&pdr&&pod.data_scadenza&&pdr.data_scadenza;
-        if(hasDual&&pod.data_scadenza!==pdr.data_scadenza){
-          return '<span style="white-space:nowrap">⚡ '+fmtDate(pod.data_scadenza)+'</span><br><span style="white-space:nowrap">🔥 '+fmtDate(pdr.data_scadenza)+'</span>';
+        const pods = r.pods||[];
+        const allPods = pods.filter(p=>p.tipo==='pod'&&p.data_scadenza);
+        const allPdrs = pods.filter(p=>p.tipo==='pdr'&&p.data_scadenza);
+
+        // Se non ci sono POD/PDR con scadenze, usa la scadenza generica
+        if(!allPods.length && !allPdrs.length) return fmtDate(scadToShow);
+
+        // Costruisce righe per ogni POD con scadenza unica
+        const lines = [];
+        // POD (Luce)
+        if(allPods.length===1){
+          lines.push('<span style="white-space:nowrap">⚡ '+fmtDate(allPods[0].data_scadenza)+'</span>');
+        } else if(allPods.length>1){
+          // Raggruppa scadenze uguali
+          const dateMap={};
+          allPods.forEach((p,i)=>{
+            const k=p.data_scadenza;
+            if(!dateMap[k]) dateMap[k]=[];
+            dateMap[k].push(i+1);
+          });
+          Object.keys(dateMap).sort().forEach(dt=>{
+            const idxs=dateMap[dt];
+            const label=idxs.length===allPods.length?'⚡':'⚡'+(idxs.map(n=>'#'+n).join(','));
+            lines.push('<span style="white-space:nowrap">'+label+' '+fmtDate(dt)+'</span>');
+          });
         }
-        if(hasDual&&pod.data_scadenza===pdr.data_scadenza){
-          return '<span style="white-space:nowrap">⚡🔥 '+fmtDate(pod.data_scadenza)+'</span>';
+        // PDR (Gas)
+        if(allPdrs.length===1){
+          lines.push('<span style="white-space:nowrap">🔥 '+fmtDate(allPdrs[0].data_scadenza)+'</span>');
+        } else if(allPdrs.length>1){
+          const dateMap={};
+          allPdrs.forEach((p,i)=>{
+            const k=p.data_scadenza;
+            if(!dateMap[k]) dateMap[k]=[];
+            dateMap[k].push(i+1);
+          });
+          Object.keys(dateMap).sort().forEach(dt=>{
+            const idxs=dateMap[dt];
+            const label=idxs.length===allPdrs.length?'🔥':'🔥'+(idxs.map(n=>'#'+n).join(','));
+            lines.push('<span style="white-space:nowrap">'+label+' '+fmtDate(dt)+'</span>');
+          });
         }
-        if(pod&&pod.data_scadenza) return '<span style="white-space:nowrap">⚡ '+fmtDate(pod.data_scadenza)+'</span>';
-        if(pdr&&pdr.data_scadenza) return '<span style="white-space:nowrap">🔥 '+fmtDate(pdr.data_scadenza)+'</span>';
-        return fmtDate(scadToShow);
+        return lines.join('<br>');
       })()}</td>
       <td>${r.valore?'€'+parseFloat(r.valore).toFixed(0):'-'}</td>
       <td>${ps?`<span class="badge ${ps}">${PAG_STATO_LABEL[ps]||ps}</span>`:'-'}</td>
@@ -1182,7 +1543,11 @@ function toggleBusiness(){
 }
 function toggleExtraContract(){
   const t=document.getElementById('f_tipo').value;
-  ['luce','gas','tel','ass','auto'].forEach(k=>document.getElementById('extra_'+k).style.display=t===k?'block':'none');
+  document.getElementById('extra_luce').style.display=(t==='luce'||t==='dual')?'block':'none';
+  document.getElementById('extra_gas').style.display=(t==='gas'||t==='dual')?'block':'none';
+  document.getElementById('extra_tel').style.display=t==='tel'?'block':'none';
+  document.getElementById('extra_ass').style.display=t==='ass'?'block':'none';
+  document.getElementById('extra_auto').style.display=t==='auto'?'block':'none';
 }
 function toggleCatastali(){
   const v=document.getElementById('f_tipo_op').value;
@@ -1204,14 +1569,18 @@ function renderPodList(){
         <div class="form-group full"><label>Codice ${p.tipo.toUpperCase()}</label>
           <input type="text" value="${p.codice||''}" placeholder="${p.tipo==='pod'?'IT001E...':'59999...'}" oninput="tmpPods[${i}].codice=this.value">
         </div>
-        <div class="form-group full"><label>Indirizzo fornitura</label>
-          <input type="text" value="${p.indirizzo||''}" placeholder="Via Roma 1, 70010 Valenzano (BA)" oninput="tmpPods[${i}].indirizzo=this.value">
+        <div class="form-group full">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+            <label style="margin-bottom:0">Indirizzo fornitura</label>
+            <button type="button" onclick="copiaResidenzaPod(${i})" style="font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border:1px solid #B5D4F4;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600">📋 Copia da residenza</button>
+          </div>
+          <input type="text" value="${p.indirizzo||''}" placeholder="Via Roma 1, 70010 Valenzano (BA)" oninput="tmpPods[${i}].indirizzo=this.value" id="pod_indirizzo_${i}">
         </div>
         <div class="form-group"><label>Fornitore uscente</label>
-          <input type="text" value="${p.fornitore_uscente||''}" placeholder="Es. Enel, Edison..." oninput="tmpPods[${i}].fornitore_uscente=this.value">
+          <input type="text" list="dl_fornitori" value="${p.fornitore_uscente||''}" placeholder="Es. Enel, Edison..." oninput="tmpPods[${i}].fornitore_uscente=this.value">
         </div>
         <div class="form-group"><label>Fornitore entrante</label>
-          <input type="text" value="${p.fornitore_entrante||''}" placeholder="Es. Acea, Iren..." oninput="tmpPods[${i}].fornitore_entrante=this.value">
+          <input type="text" list="dl_fornitori" value="${p.fornitore_entrante||''}" placeholder="Es. Acea, Iren..." oninput="tmpPods[${i}].fornitore_entrante=this.value">
         </div>
         <div class="form-group"><label>Uso</label>
           <select onchange="tmpPods[${i}].uso=this.value">
@@ -1254,6 +1623,15 @@ function renderPodList(){
         <div class="form-group"><label>Prezzo offerta (manuale)</label>
           <input type="text" value="${p.prezzo||''}" placeholder="${p.tipo==='pod'?'Es. 0,07 €/kWh':'Es. 0,42 €/mc'}" oninput="tmpPods[${i}].prezzo=this.value" id="pod_prezzo_${i}">
         </div>
+        <div class="form-group"><label>Sconto applicato</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" step="0.01" value="${p.sconto_valore||''}" placeholder="Es. 10" style="width:80px" oninput="tmpPods[${i}].sconto_valore=this.value">
+            <select style="width:60px;padding:5px" onchange="tmpPods[${i}].sconto_tipo=this.value">
+              <option value="%" ${(!p.sconto_tipo||p.sconto_tipo==='%')?'selected':''}>%</option>
+              <option value="€" ${p.sconto_tipo==='€'?'selected':''}>€</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group"><label>Nome offerta</label>
           <input type="text" value="${p.nome_offerta||''}" placeholder="Es. Acea Fix 12M" oninput="tmpPods[${i}].nome_offerta=this.value" id="pod_nomeoff_${i}">
         </div>
@@ -1291,6 +1669,10 @@ function renderPodList(){
         </div>
       </div>
     </div>`).join('');
+  // Attiva OSM autocomplete su tutti gli indirizzi POD/PDR appena renderizzati
+  setTimeout(function(){
+    tmpPods.forEach(function(_,i){ setupAddressAutocomplete('pod_indirizzo_'+i); });
+  },50);
 }
 
 function calcolaScadenzaPod(i){
@@ -1303,6 +1685,18 @@ function calcolaScadenzaPod(i){
   const el=document.getElementById('pod_scad_'+i);
   if(el)el.value=iso;
 }
+function copiaResidenzaPod(i) {
+  var residenza = (document.getElementById('f_residenza')||{}).value || '';
+  if (!residenza) {
+    showToast('Inserisci prima l’indirizzo di residenza nel form cliente');
+    return;
+  }
+  tmpPods[i].indirizzo = residenza;
+  var el = document.getElementById('pod_indirizzo_' + i);
+  if (el) { el.value = residenza; showToast('Indirizzo copiato ✓'); }
+  else { renderPodList(); showToast('Indirizzo copiato ✓'); }
+}
+
 function addPod(tipo){tmpPods.push({tipo,codice:'',indirizzo:'',uso:'residenziale',tipo_op:'',potenza:'',consumo:'',catastali:''});renderPodList();}
 function removePod(i){tmpPods.splice(i,1);renderPodList();}
 function togglePodCatastali(i,v){const el=document.getElementById('pod_cat_'+i);if(el)el.style.display=(v==='subentro'||v==='voltura')?'flex':'none';}
@@ -1342,27 +1736,165 @@ function renderBegaList(){
         <div class="form-group"><label>Data chiusura</label>
           <input type="date" value="${b.data_chiusura||''}" oninput="tmpBegas[${i}].data_chiusura=this.value">
         </div>
-        <div class="form-group full"><label>Note / descrizione</label>
-          <textarea style="height:40px" oninput="tmpBegas[${i}].note=this.value">${b.note||''}</textarea>
+        <div class="form-group"><label>Data scadenza pratica</label>
+          <input type="date" value="${b.data_scadenza||''}" oninput="tmpBegas[${i}].data_scadenza=this.value">
         </div>
+        <div class="form-group full"><label>Note / descrizione</label>
+          <textarea style="height:40px;color:#111;font-weight:500" oninput="tmpBegas[${i}].note=this.value">${b.note||''}</textarea>
+        </div>
+        <div class="form-group full"><label>💬 Risposta fornitore</label>
+          <textarea style="height:50px;color:#111;font-weight:500;background:#f0f7ff;border-color:#aacef5" placeholder="Scrivi qui la risposta ricevuta dal fornitore..." oninput="tmpBegas[${i}].risposta_fornitore=this.value">${b.risposta_fornitore||''}</textarea>
+        </div>
+        ${b.risposta_fornitore ? `<div class="form-group full">
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;background:#E7F5E9;color:#1a5c2a;border-color:#8ecf9a"
+            onclick="inviaRispostaWA(${i})">📲 Invia risposta al cliente via WhatsApp</button>
+        </div>` : ''}
       </div>
     </div>`).join('');
 }
-function addBega(){tmpBegas.push({tipo:BEGA_TIPI[0],stato:'aperta',fornitore:'',ticket:'',data_apertura:'',data_chiusura:'',note:''});renderBegaList();}
+function addBega(){tmpBegas.push({tipo:BEGA_TIPI[0],stato:'aperta',fornitore:'',ticket:'',data_apertura:'',data_chiusura:'',note:'',risposta_fornitore:'',data_scadenza:''});renderBegaList();}
 function removeBega(i){tmpBegas.splice(i,1);renderBegaList();}
+
+var tmpGettoni = [];
+
+var GETTONE_TIPI = [
+  {val:'luce',       label:'⚡ Gettone Luce'},
+  {val:'gas',        label:'🔥 Gettone Gas'},
+  {val:'dual',       label:'⚡🔥 Gettone Dual (Luce+Gas)'},
+  {val:'rid',        label:'🏦 Gettone RID'},
+  {val:'ricorrente', label:'🔄 Gettone Ricorrente'},
+  {val:'altro',      label:'📦 Altro'},
+];
+var GETTONE_CAT = ['Residenziale','Business','Assicurazione','Fotovoltaico','Noleggio','Altro'];
+var GETTONE_STATO = [
+  {val:'da_pagare', label:'⏳ Da pagare', col:'#7a4f00', bg:'#FDF4DC'},
+  {val:'pagato',    label:'✅ Pagato',    col:'#1a5c2a', bg:'#EAF3DE'},
+  {val:'ko',        label:'❌ KO',        col:'#7C1A1A', bg:'#FAEAE8'},
+];
+
+function addGettone() {
+  var oggi = new Date().toISOString().split('T')[0];
+  tmpGettoni.push({tipo:'luce', categoria:'Residenziale', importo:'', quantita:1, data_competenza:oggi, stato:'da_pagare', note:''});
+  renderGettoniList();
+}
+function removeGettone(i) { tmpGettoni.splice(i,1); renderGettoniList(); }
+
+function renderGettoniList() {
+  var el = document.getElementById('gettoni_list');
+  var emp = document.getElementById('gettoni_empty');
+  if (!tmpGettoni.length) { el.innerHTML=''; emp.style.display='block'; return; }
+  emp.style.display='none';
+  var totale = tmpGettoni.reduce(function(s,g){ return s + (parseFloat(g.importo)||0)*(parseInt(g.quantita)||1); }, 0);
+  el.innerHTML = tmpGettoni.map(function(g,i) {
+    var tipoOpts = GETTONE_TIPI.map(function(t){ return '<option value="'+t.val+'" '+(g.tipo===t.val?'selected':'')+'>'+t.label+'</option>'; }).join('');
+    var catOpts  = GETTONE_CAT.map(function(c){ return '<option '+(g.categoria===c?'selected':'')+'>'+c+'</option>'; }).join('');
+    var statoOpts= GETTONE_STATO.map(function(s){ return '<option value="'+s.val+'" '+(g.stato===s.val?'selected':'')+'>'+s.label+'</option>'; }).join('');
+    var st = GETTONE_STATO.find(function(s){ return s.val===g.stato; })||GETTONE_STATO[0];
+    return '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;margin-bottom:6px;background:'+st.bg+'">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '<select style="font-size:12px;font-weight:700;border:none;background:transparent;color:'+st.col+'" onchange="tmpGettoni['+i+'].tipo=this.value;renderGettoniList()">'+tipoOpts+'</select>'
+      + '<button class="btn" style="font-size:10px;padding:2px 7px;background:#FFF0F0;color:#8B1A1A;border-color:#FFBBBB" onclick="removeGettone('+i+')">✕</button>'
+      + '</div>'
+      + '<div class="form-grid">'
+      + '<div class="form-group"><label>Categoria</label><select onchange="tmpGettoni['+i+'].categoria=this.value">'+catOpts+'</select></div>'
+      + '<div class="form-group"><label>Importo (€)</label><input type="number" step="0.01" value="'+(g.importo||'')+'" placeholder="0.00" oninput="tmpGettoni['+i+'].importo=this.value"></div>'
+      + '<div class="form-group"><label>Quantità (multisito)</label><input type="number" min="1" value="'+(g.quantita||1)+'" oninput="tmpGettoni['+i+'].quantita=this.value"></div>'
+      + '<div class="form-group"><label>Data competenza</label><input type="date" value="'+(g.data_competenza||'')+'" oninput="tmpGettoni['+i+'].data_competenza=this.value"></div>'
+      + '<div class="form-group"><label>Stato pagamento</label><select onchange="tmpGettoni['+i+'].stato=this.value;renderGettoniList()">'+statoOpts+'</select></div>'
+      + '<div class="form-group"><label>Note</label><input type="text" value="'+(g.note||'')+'" placeholder="Es. sito via Roma 12" oninput="tmpGettoni['+i+'].note=this.value"></div>'
+      + '</div></div>';
+  }).join('')
+  + '<div style="text-align:right;font-weight:700;font-size:13px;padding:6px 4px;color:#27500A">Totale gettoni: € '+totale.toFixed(2)+'</div>';
+}
+
+var tmpServizi = [];
+var SERVIZIO_LABEL = {tel:'📱 Telefonia', fotovoltaico:'☀️ Fotovoltaico', ass:'🛡 Assicurazione', auto:'🚗 Noleggio Auto', altro:'📦 Altro'};
+
+function addServizio() {
+  var tipo = document.getElementById('new_servizio_tipo').value;
+  if (!tipo) { showToast('Seleziona il tipo di servizio'); return; }
+  tmpServizi.push({tipo:tipo, fornitore:'', codice:'', inizio:'', scadenza:'', valore:'', stato:'Attivo', note:'',
+    // extra fields per tipo
+    piano:'', sim:'', kw:'', moduli:'', polizza:'', targa:'', nnoleggio:''
+  });
+  renderServiziList();
+}
+
+function removeServizio(i) { tmpServizi.splice(i,1); renderServiziList(); }
+
+function renderServiziList() {
+  var el = document.getElementById('servizi_list');
+  var emp = document.getElementById('servizi_empty');
+  if (!tmpServizi.length) { el.innerHTML=''; emp.style.display='block'; return; }
+  emp.style.display='none';
+  el.innerHTML = tmpServizi.map(function(s, i) {
+    var label = SERVIZIO_LABEL[s.tipo] || s.tipo;
+    var extraFields = '';
+    if (s.tipo === 'tel') {
+      extraFields = '<div class="form-group"><label>Piano / Tariffa</label><input type="text" value="'+esc(s.piano)+'" placeholder="Es. Fibra 1Gbps + 2 SIM" oninput="tmpServizi['+i+'].piano=this.value"></div>'
+        + '<div class="form-group"><label>N° SIM / Linee</label><input type="text" value="'+esc(s.sim)+'" placeholder="Es. 3391234567" oninput="tmpServizi['+i+'].sim=this.value"></div>';
+    } else if (s.tipo === 'fotovoltaico') {
+      extraFields = '<div class="form-group"><label>Potenza impianto (kW)</label><input type="text" value="'+esc(s.kw)+'" placeholder="Es. 6" oninput="tmpServizi['+i+'].kw=this.value"></div>'
+        + '<div class="form-group"><label>N° moduli</label><input type="text" value="'+esc(s.moduli)+'" placeholder="Es. 18" oninput="tmpServizi['+i+'].moduli=this.value"></div>';
+    } else if (s.tipo === 'ass') {
+      extraFields = '<div class="form-group"><label>N° polizza</label><input type="text" value="'+esc(s.polizza)+'" placeholder="Es. GEN-2024-XXXXX" oninput="tmpServizi['+i+'].polizza=this.value"></div>'
+        + '<div class="form-group"><label>Targa veicolo</label><input type="text" value="'+esc(s.targa)+'" placeholder="Es. AB123CD" oninput="tmpServizi['+i+'].targa=this.value"></div>';
+    } else if (s.tipo === 'auto') {
+      extraFields = '<div class="form-group"><label>Targa / Modello</label><input type="text" value="'+esc(s.targa)+'" placeholder="Es. AB123CD - Fiat Tipo" oninput="tmpServizi['+i+'].targa=this.value"></div>'
+        + '<div class="form-group"><label>N° contratto noleggio</label><input type="text" value="'+esc(s.nnoleggio)+'" placeholder="ALD-2024-XXXXX" oninput="tmpServizi['+i+'].nnoleggio=this.value"></div>'
+        + '<div class="form-group full"><label>Piano NLT</label><input type="text" value="'+esc(s.piano)+'" placeholder="Es. NLT 36 mesi, 20.000 km/anno" oninput="tmpServizi['+i+'].piano=this.value"></div>';
+    }
+    return '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fafafa">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '<span style="font-weight:700;font-size:13px">'+label+'</span>'
+      + '<button class="btn" style="font-size:11px;padding:2px 8px;background:#FFF0F0;color:#8B1A1A;border-color:#FFBBBB" onclick="removeServizio('+i+')">✕ Rimuovi</button>'
+      + '</div>'
+      + '<div class="form-grid">'
+      + '<div class="form-group"><label>Fornitore / Società</label><input type="text" value="'+esc(s.fornitore)+'" placeholder="Es. TIM, Enel X, AXA..." oninput="tmpServizi['+i+'].fornitore=this.value"></div>'
+      + '<div class="form-group"><label>Codice contratto</label><input type="text" value="'+esc(s.codice)+'" placeholder="Es. TIM-2024-XXXXX" oninput="tmpServizi['+i+'].codice=this.value"></div>'
+      + '<div class="form-group"><label>Data inizio</label><input type="date" value="'+esc(s.inizio)+'" oninput="tmpServizi['+i+'].inizio=this.value"></div>'
+      + '<div class="form-group"><label>Data scadenza</label><input type="date" value="'+esc(s.scadenza)+'" oninput="tmpServizi['+i+'].scadenza=this.value"></div>'
+      + '<div class="form-group"><label>Valore mensile (€)</label><input type="number" value="'+esc(s.valore)+'" placeholder="0.00" oninput="tmpServizi['+i+'].valore=this.value"></div>'
+      + '<div class="form-group"><label>Stato</label><select oninput="tmpServizi['+i+'].stato=this.value">'
+      + ['Proposta','In lavorazione','Attivo','Scaduto'].map(function(st){return '<option '+(s.stato===st?'selected':'')+'>'+st+'</option>';}).join('')
+      + '</select></div>'
+      + extraFields
+      + '<div class="form-group full"><label>Note</label><input type="text" value="'+esc(s.note)+'" placeholder="Note aggiuntive..." oninput="tmpServizi['+i+'].note=this.value"></div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function esc(v){ return (v||'').toString().replace(/"/g,'&quot;'); }
+
+function inviaRispostaWA(i) {
+  var r = data.find(x => x.id === viewingId);
+  if (!r) return;
+  var b = tmpBegas[i];
+  var tel = (r.tel||'').replace(/\D/g,'');
+  if (!tel) { showToast('Nessun numero di telefono salvato per questo cliente'); return; }
+  var testo = 'Buongiorno ' + r.nome + ',\n\n'
+    + 'In merito alla Sua pratica *' + (b.tipo||'pratica') + '*'
+    + (b.fornitore ? ' con *' + b.fornitore + '*' : '')
+    + (b.ticket ? ' (rif. ' + b.ticket + ')' : '')
+    + ', Le comunichiamo la seguente risposta ricevuta dal fornitore:\n\n'
+    + (b.risposta_fornitore||'')
+    + '\n\nRimanendo a disposizione per qualsiasi chiarimento.\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano';
+  var url = 'https://wa.me/39' + tel + '?text=' + encodeURIComponent(testo);
+  window.open(url, '_blank');
+}
 
 /* ===== FORM OPEN/CLEAR ===== */
 function clearForm(){
-  const ids=['nome','cf','tel','email','residenza','data_nascita','luogo_nascita','fornitore','inizio','scadenza','data_att_contratto','data_att_fornitura','piva','ateco','sede_legale','legale_rapp','pec','iban_az','iban_az_int',
+  const ids=['nome','cf','tel','email','residenza','data_nascita','luogo_nascita','fornitore','inizio','scadenza','data_att_fornitura_luce','data_att_fornitura_gas','piva','ateco','sede_legale','legale_rapp','pec','iban_az','iban_az_int',
     'doc_num','doc_luogo','iban','iban_int','fornitore','prezzo','note',
-    'piano','ncontratto','polizza','targa','targa_auto','nnoleggio','piano_auto',
+    'piano','ncontratto','polizza','targa','targa_auto','nnoleggio','piano_auto','codice_contratto','sconto_valore','sconto_tipo',
     'cat_comune','cat_foglio','cat_particella','cat_sub','cat_categoria','cat_reg'];
   ids.forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
-  ['tipo_cliente','doc_tipo','tipo','stato','tipo_op','pagamento_stato','bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas']
+  ['tipo_cliente','doc_tipo','tipo','stato','tipo_op','pagamento_stato','bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas','conferma_contratto','quality_call']
     .forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
   document.getElementById('f_stato').value='Proposta';
   document.getElementById('f_valore').value='';
-  ['inizio','scadenza','doc_emissione','doc_scadenza','data_att_contratto','data_att_fornitura']
+  ['inizio','scadenza','doc_emissione','doc_scadenza','data_att_fornitura_luce','data_att_fornitura_gas']
     .forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
   toggleBusiness();toggleExtraContract();toggleCatastali();
   document.getElementById('catastali_section').style.display='none';
@@ -1376,10 +1908,18 @@ function openNew(){
   editingId=null;
   document.getElementById('modalTitle').textContent='Nuovo contratto';
   clearForm();
-  tmpPods=[];tmpBegas=[];
-  renderPodList();renderBegaList();
+  tmpPods=[];tmpBegas=[];tmpServizi=[];tmpGettoni=[];
+  renderPodList();renderBegaList();renderServiziList();renderGettoniList();renderGettoniList();
   switchMTab(0,document.querySelector('.mtab'));
   document.getElementById('newModal').classList.add('open');
+  // Autocomplete
+  setTimeout(function(){
+    attachForniториAutocomplete();
+    setupAddressAutocomplete('f_residenza');
+    setupAddressAutocomplete('f_sede_legale');
+    var cfEl = document.getElementById('f_cf');
+    if(cfEl && !cfEl.dataset.cfReady){ cfEl.dataset.cfReady='1'; cfEl.addEventListener('input',onCFInput); }
+  },100);
 }
 
 function openEdit(id){
@@ -1394,10 +1934,13 @@ function openEdit(id){
   sv('iban',r.iban);sv('iban_int',r.iban_int);
   sv('tipo',r.tipo);sv('fornitore',r.fornitore);sv('stato',r.stato);sv('tipo_op',r.tipo_op);
   sv('valore',r.valore);sv('prezzo',r.prezzo);sv('inizio',r.inizio);sv('scadenza',r.scadenza);
-  sv('data_att_contratto',r.data_att_contratto);sv('data_att_fornitura',r.data_att_fornitura);
+  sv('codice_contratto',r.codice_contratto);
+  sv('sconto_valore',r.sconto_valore);sv('sconto_tipo',r.sconto_tipo||'%');
+  sv('data_att_fornitura_luce',r.data_att_fornitura_luce);sv('data_att_fornitura_gas',r.data_att_fornitura_gas);
   sv('pagamento_stato',r.pagamento_stato);sv('note',r.note);
   sv('bolletta_luce',r.bolletta_luce);sv('pagamento_luce',r.pagamento_luce);
   sv('bolletta_gas',r.bolletta_gas);sv('pagamento_gas',r.pagamento_gas);
+  sv('conferma_contratto',r.conferma_contratto);sv('quality_call',r.quality_call);
   sv('piano',r.piano);sv('ncontratto',r.ncontratto);sv('polizza',r.polizza);sv('targa',r.targa);
   sv('targa_auto',r.targa_auto);sv('nnoleggio',r.nnoleggio);sv('piano_auto',r.piano_auto);
   sv('cat_comune',r.cat_comune);sv('cat_foglio',r.cat_foglio);sv('cat_particella',r.cat_particella);
@@ -1405,9 +1948,19 @@ function openEdit(id){
   toggleBusiness();toggleExtraContract();toggleCatastali();
   tmpPods=JSON.parse(JSON.stringify(r.pods||[]));
   tmpBegas=JSON.parse(JSON.stringify(r.begas||[]));
+  tmpServizi=JSON.parse(JSON.stringify(r.servizi||[]));
+  tmpGettoni=JSON.parse(JSON.stringify(r.gettoni||[]));
   renderPodList();renderBegaList();
   switchMTab(0,document.querySelector('.mtab'));
   document.getElementById('newModal').classList.add('open');
+  // Autocomplete
+  setTimeout(function(){
+    attachForniториAutocomplete();
+    setupAddressAutocomplete('f_residenza');
+    setupAddressAutocomplete('f_sede_legale');
+    var cfEl = document.getElementById('f_cf');
+    if(cfEl && !cfEl.dataset.cfReady){ cfEl.dataset.cfReady='1'; cfEl.addEventListener('input',onCFInput); }
+  },100);
 }
 
 function saveContract(){
@@ -1424,16 +1977,21 @@ function saveContract(){
     iban:gv('iban'),iban_int:gv('iban_int'),
     fornitore:gv('fornitore'),stato:gv('stato'),tipo_op:gv('tipo_op'),
     valore:parseFloat(gv('valore'))||0,prezzo:gv('prezzo'),
-    inizio:gv('inizio'),scadenza:gv('scadenza'),data_att_contratto:gv('data_att_contratto'),data_att_fornitura:gv('data_att_fornitura'),
+    inizio:gv('inizio'),scadenza:gv('scadenza'),data_att_fornitura_luce:gv('data_att_fornitura_luce'),data_att_fornitura_gas:gv('data_att_fornitura_gas'),
     pagamento_stato:gv('pagamento_stato'),note:gv('note'),
     bolletta_luce:gv('bolletta_luce'),pagamento_luce:gv('pagamento_luce'),
     bolletta_gas:gv('bolletta_gas'),pagamento_gas:gv('pagamento_gas'),
+    conferma_contratto:gv('conferma_contratto'),quality_call:gv('quality_call'),
     piano:gv('piano'),ncontratto:gv('ncontratto'),polizza:gv('polizza'),targa:gv('targa'),
+    codice_contratto:gv('codice_contratto'),
+    sconto_valore:gv('sconto_valore'),sconto_tipo:gv('sconto_tipo')||'%',
     targa_auto:gv('targa_auto'),nnoleggio:gv('nnoleggio'),piano_auto:gv('piano_auto'),
     cat_comune:gv('cat_comune'),cat_foglio:gv('cat_foglio'),cat_particella:gv('cat_particella'),
     cat_sub:gv('cat_sub'),cat_categoria:gv('cat_categoria'),cat_reg:gv('cat_reg'),
     pods:JSON.parse(JSON.stringify(tmpPods)),
     begas:JSON.parse(JSON.stringify(tmpBegas)),
+    servizi:JSON.parse(JSON.stringify(tmpServizi)),
+    gettoni:JSON.parse(JSON.stringify(tmpGettoni)),
   };
   if(editingId){data[data.findIndex(x=>x.id===editingId)]={...data.find(x=>x.id===editingId),...obj};showToast('Contratto aggiornato ✓');}
   else{obj.id=nextId++;obj.data_inserimento=new Date().toISOString().split('T')[0];data.push(obj);showToast('Contratto salvato ✓');}
@@ -1443,6 +2001,59 @@ function saveContract(){
 function closeModal(){document.getElementById('newModal').classList.remove('open');}
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
 function editFromDetail(){closeDetail();openEdit(viewingId);}
+
+function copiaAnagrafica(){
+  var r = data.find(function(x){ return x.id === viewingId; });
+  if(!r) return;
+  closeDetail();
+  // Apri form nuovo contratto
+  ['detailModal','msgModal','printModal','importModal','restoreModal'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.classList.remove('open');
+  });
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Nuovo contratto — ' + r.nome;
+  clearForm();
+  tmpPods=[];tmpBegas=[];tmpServizi=[];tmpGettoni=[];
+  // Compila solo i dati anagrafici
+  var sv = function(fid, val){ var e=document.getElementById('f_'+fid); if(e) e.value=val||''; };
+  sv('nome', r.nome);
+  sv('tipo_cliente', r.tipo_cliente);
+  sv('cf', r.cf);
+  sv('tel', r.tel);
+  sv('email', r.email);
+  sv('residenza', r.residenza);
+  sv('data_nascita', r.data_nascita);
+  sv('luogo_nascita', r.luogo_nascita);
+  // Documento
+  sv('doc_tipo', r.doc_tipo);
+  sv('doc_num', r.doc_num);
+  sv('doc_luogo', r.doc_luogo);
+  sv('doc_emissione', r.doc_emissione);
+  sv('doc_scadenza', r.doc_scadenza);
+  // IBAN personale
+  sv('iban', r.iban);
+  sv('iban_int', r.iban_int);
+  // Dati aziendali (se business)
+  sv('piva', r.piva);
+  sv('ateco', r.ateco);
+  sv('sede_legale', r.sede_legale);
+  sv('legale_rapp', r.legale_rapp);
+  sv('pec', r.pec);
+  sv('iban_az', r.iban_az);
+  sv('iban_az_int', r.iban_az_int);
+  toggleBusiness();
+  renderPodList();renderBegaList();renderServiziList();renderGettoniList();
+  switchMTab(0, document.querySelector('.mtab'));
+  document.getElementById('newModal').classList.add('open');
+  setTimeout(function(){
+    attachForniториAutocomplete();
+    setupAddressAutocomplete('f_residenza');
+    setupAddressAutocomplete('f_sede_legale');
+    var cfEl = document.getElementById('f_cf');
+    if(cfEl && !cfEl.dataset.cfReady){ cfEl.dataset.cfReady='1'; cfEl.addEventListener('input',onCFInput); }
+  },100);
+  showToast('📋 Anagrafica copiata — compila i dati del nuovo contratto');
+}
 
 function switchDTab(idx,el){
   document.querySelectorAll('.d-tab').forEach((t,i)=>{
@@ -1489,15 +2100,34 @@ function openDetail(id){
   const _scadPdr=_pdr.data_scadenza||r.scadenza||'';
   const dPod=daysDiff(_scadPod), dPdr=daysDiff(_scadPdr);
   const da=document.getElementById('d_alert');
-  da.className='d-alert-bar';
+  da.className='d-alert-bar';da.innerHTML='';
   const beghe_ap=(r.begas||[]).filter(b=>b.stato==='aperta').length;
-  if(beghe_ap){da.className='d-alert-bar warn';da.textContent='⚠️ '+beghe_ap+' pratica'+(beghe_ap>1?'he':'')+' aperta'+(beghe_ap>1?'e':'');}
-  else if(dPod!==null&&dPod<0){da.className='d-alert-bar scad';da.textContent='❌ Luce scaduta da '+Math.abs(dPod)+' giorni';}
-  else if(dPdr!==null&&dPdr<0){da.className='d-alert-bar scad';da.textContent='❌ Gas scaduto da '+Math.abs(dPdr)+' giorni';}
-  else if(dPod!==null&&dPod<=30){da.className='d-alert-bar warn';da.textContent='⚠ Scadenza luce tra '+dPod+' giorni';}
-  else if(dPdr!==null&&dPdr<=30){da.className='d-alert-bar warn';da.textContent='⚠ Scadenza gas tra '+dPdr+' giorni';}
-  else if(dPod!==null){da.className='d-alert-bar ok';da.textContent='✓ Attivo — scadenza tra '+dPod+' giorni';}
-  else da.style.display='none';
+
+  // Raccoglie tutte le segnalazioni in ordine di priorità
+  const alerts=[];
+  if(beghe_ap) alerts.push({cls:'warn',msg:'⚠️ '+beghe_ap+' pratica'+(beghe_ap>1?'he':'')+' aperta'+(beghe_ap>1?'e':'')});
+  if(r.conferma_contratto==='da_confermare') alerts.push({cls:'warn',msg:'🖊 Contratto in attesa di conferma da parte del cliente'});
+  if(r.conferma_contratto==='rifiutato') alerts.push({cls:'scad',msg:'❌ Contratto rifiutato dal cliente'});
+  if(r.quality_call==='da_effettuare') alerts.push({cls:'warn',msg:'📞 Quality call fornitore ancora da effettuare'});
+  if(r.quality_call==='non_risposto') alerts.push({cls:'warn',msg:'🔁 Quality call: cliente non ha risposto — da richiamare'});
+  if(dPod!==null&&dPod<0) alerts.push({cls:'scad',msg:'❌ Luce scaduta da '+Math.abs(dPod)+' giorni'});
+  if(dPdr!==null&&dPdr<0) alerts.push({cls:'scad',msg:'❌ Gas scaduto da '+Math.abs(dPdr)+' giorni'});
+  if(dPod!==null&&dPod>=0&&dPod<=30) alerts.push({cls:'warn',msg:'⚠ Scadenza luce tra '+dPod+' giorni'});
+  if(dPdr!==null&&dPdr>=0&&dPdr<=30) alerts.push({cls:'warn',msg:'⚠ Scadenza gas tra '+dPdr+' giorni'});
+
+  if(alerts.length===1){
+    da.className='d-alert-bar '+alerts[0].cls;
+    da.textContent=alerts[0].msg;
+  } else if(alerts.length>1){
+    da.className='d-alert-bar multi';
+    da.innerHTML=alerts.map(a=>`<div>
+      <span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;margin-right:4px;background:${a.cls==='scad'?'#FAEAE8':a.cls==='warn'?'#FDF4DC':'#EAF3DE'};color:${a.cls==='scad'?'#7C1A1A':a.cls==='warn'?'#6B4800':'#2F5038'}">${a.msg}</span>
+    </div>`).join('');
+  } else if(dPod!==null){
+    da.className='d-alert-bar ok';da.textContent='✓ Attivo — scadenza tra '+dPod+' giorni';
+  } else {
+    da.style.display='none';
+  }
 
   // Helpers per campo a 2 col
   const F=(l,v,mono)=>v&&v!=='-'?`<div class="d-field"><div class="d-field-label">${l}</div><div class="d-field-value${mono?' mono':''}">${v}</div></div>`:'';
@@ -1508,30 +2138,35 @@ function openDetail(id){
   const _prezzo = r.prezzo || _pod.prezzo || _pdr.prezzo || '';
   const _inizio = r.inizio || _pod.data_inizio || _pdr.data_inizio || '';
   const _scadenza = r.scadenza || _pod.data_scadenza || _pdr.data_scadenza || '';
-  const _attContr = r.data_att_contratto || _pod.data_inizio || '';
-  const _attForn = r.data_att_fornitura || _pod.data_attivazione || _pdr.data_attivazione || '';
+  const _attContr = r.data_att_fornitura_luce || _pod.data_inizio || '';
+  const _attForn = r.data_att_fornitura_gas || r.data_att_fornitura || _pod.data_attivazione || _pdr.data_attivazione || '';
   const _bolletta = _pod.bolletta || _pdr.bolletta || '';
   const _pagMod = _pod.pagamento || _pdr.pagamento || '';
   const bollLabel = _bolletta==='web'?'🌐 Web':_bolletta==='cartacea'?'📄 Cartacea':'';
   const pagLabel = {iban:'🏦 Dom. IBAN',bollettino:'📮 Bollettino',rid:'🔄 RID',altro:'Altro',domiciliazione:'🏦 Domiciliazione',bonifico:'💸 Bonifico'}[_pagMod]||_pagMod||'';
+  const CONF_LABEL={'da_confermare':'⏳ Da confermare','confermato':'✅ Confermato','rifiutato':'❌ Rifiutato'};
+  const QC_LABEL={'da_effettuare':'⏳ Da effettuare','risposto':'✅ Risposto','non_risposto':'🔁 Non risposto / Da richiamare'};
   document.getElementById('dp0').innerHTML=`
     <div class="d-grid">
       <div class="d-section">
         ${S('📋 Dati contratto')}
         ${F('Fornitore',_forn)}
+        ${F('Codice contratto',r.codice_contratto,'mono')}
         ${F('Tipo operazione',TIPO_OP_LABEL[r.tipo_op]||r.tipo_op)}
         ${F('Valore mensile',r.valore?'€ '+parseFloat(r.valore).toFixed(2):'')}
         ${F('Prezzo offerta',_prezzo)}
         ${F('Stato pagamento',PAG_STATO_LABEL[r.pagamento_stato]||r.pagamento_stato)}
         ${F('Modalità pagamento',pagLabel)}
         ${F('Tipo bolletta',bollLabel)}
+        ${r.conferma_contratto?`<div class="d-field"><div class="d-field-label">🖊 Conferma contratto</div><div class="d-field-value" style="${r.conferma_contratto==='rifiutato'?'color:#7C1A1A;font-weight:700':r.conferma_contratto==='da_confermare'?'color:#6B4800;font-weight:700':'color:#2F5038'}">${CONF_LABEL[r.conferma_contratto]||r.conferma_contratto}</div></div>`:''}
+        ${r.quality_call?`<div class="d-field"><div class="d-field-label">📞 Quality call fornitore</div><div class="d-field-value" style="${r.quality_call==='non_risposto'?'color:#6B4800;font-weight:700':r.quality_call==='da_effettuare'?'color:#6B4800;font-weight:700':'color:#2F5038'}">${QC_LABEL[r.quality_call]||r.quality_call}</div></div>`:''}
       </div>
       <div class="d-section">
         ${S('📅 Date')}
         ${F('Data inizio',fmtDate(_inizio))}
         ${F('Data scadenza',fmtDate(_scadenza))}
-        ${F('Att. contratto',fmtDate(_attContr))}
-        ${F('Att. fornitura',fmtDate(_attForn))}
+        ${F('Att. fornitura Luce ⚡',fmtDate(_attContr))}
+        ${F('Att. fornitura Gas 🔥',fmtDate(_attForn))}
         ${F('Inserito il',fmtDate(r.data_inserimento))}
       </div>
     </div>
@@ -1594,6 +2229,59 @@ function openDetail(id){
     ${b.note?`<div style="font-size:11px;color:#887860;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${b.note}</div>`:''}
   </div>`).join(''):'<div style="text-align:center;padding:2rem;color:#B0A080;font-size:12px">Nessuna pratica registrata</div>';
 
+  // ── PANNELLO 4: ALTRI SERVIZI ──
+  const servizi = r.servizi||[];
+  const SLABEL = {tel:'📱 Telefonia', fotovoltaico:'☀️ Fotovoltaico', ass:'🛡 Assicurazione', auto:'🚗 Noleggio Auto', altro:'📦 Altro'};
+  const SCOLOR = {tel:'#1a4d8f', fotovoltaico:'#7a5c00', ass:'#2F5038', auto:'#5c2d00', altro:'#555'};
+  const SBKG   = {tel:'#EAF3FE', fotovoltaico:'#FFFDE7', ass:'#EAF3DE', auto:'#FFF3E0', altro:'#F5F5F5'};
+
+  // ── PANNELLO 5: GETTONI ──
+  var gettoni = r.gettoni||[];
+  var gpTot = gettoni.reduce(function(s,g){ return s+(parseFloat(g.importo)||0)*(parseInt(g.quantita)||1);},0);
+  var GTLABEL = {luce:'⚡ Luce', gas:'🔥 Gas', dual:'⚡🔥 Dual', rid:'🏦 RID', ricorrente:'🔄 Ricorrente', altro:'📦 Altro'};
+  var GSTATO = {da_pagare:{label:'⏳ Da pagare',col:'#7a4f00',bg:'#FDF4DC'},pagato:{label:'✅ Pagato',col:'#1a5c2a',bg:'#EAF3DE'},ko:{label:'❌ KO',col:'#7C1A1A',bg:'#FAEAE8'}};
+  document.getElementById('dp5').innerHTML = gettoni.length ?
+    '<div style="margin-bottom:8px">' +
+    gettoni.map(function(g) {
+      var st = GSTATO[g.stato]||GSTATO['da_pagare'];
+      var importoTot = ((parseFloat(g.importo)||0)*(parseInt(g.quantita)||1)).toFixed(2);
+      return '<div style="border:1px solid #ddd;border-radius:8px;padding:10px 12px;margin-bottom:6px;background:'+st.bg+';display:flex;justify-content:space-between;align-items:flex-start">'
+        + '<div>'
+        + '<div style="font-weight:700;font-size:13px">'+(GTLABEL[g.tipo]||g.tipo)+'<span style="font-weight:400;font-size:11px;color:#666;margin-left:6px">'+g.categoria+'</span></div>'
+        + (g.data_competenza?'<div style="font-size:11px;color:#888;margin-top:2px">Competenza: '+fmtDate(g.data_competenza)+'</div>':'')
+        + (g.note?'<div style="font-size:11px;color:#666;margin-top:2px">'+g.note+'</div>':'')
+        + '</div>'
+        + '<div style="text-align:right">'
+        + '<div style="font-weight:700;font-size:14px">€ '+importoTot+(parseInt(g.quantita)>1?' <span style="font-size:10px;color:#888">(x'+g.quantita+')</span>':'')+'</div>'
+        + '<div style="font-size:10px;font-weight:600;color:'+st.col+';margin-top:2px">'+st.label+'</div>'
+        + '</div>'
+        + '</div>';
+    }).join('')
+    + '<div style="text-align:right;font-weight:700;font-size:14px;padding:8px 4px;border-top:2px solid #ddd;color:#27500A">Totale: € '+gpTot.toFixed(2)+'</div>'
+    + '</div>'
+    : '<div style="text-align:center;padding:2rem;color:#B0A080;font-size:12px">Nessun gettone registrato<br><span style="font-size:11px">Modifica il cliente per aggiungere gettoni da fatturare</span></div>';
+
+  document.getElementById('dp4').innerHTML = servizi.length ? servizi.map(s => {
+    var extra = '';
+    if (s.tipo==='tel')          extra = F('Piano/Tariffa',s.piano) + F('N° SIM / Linee',s.sim);
+    if (s.tipo==='fotovoltaico') extra = F('Potenza (kW)',s.kw) + F('N° moduli',s.moduli);
+    if (s.tipo==='ass')          extra = F('N° polizza',s.polizza) + F('Targa',s.targa);
+    if (s.tipo==='auto')         extra = F('Targa / Modello',s.targa) + F('N° noleggio',s.nnoleggio) + F('Piano NLT',s.piano);
+    var col = SCOLOR[s.tipo]||'#555', bg = SBKG[s.tipo]||'#f9f9f9';
+    return `<div style="border:1px solid #e0e0e0;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:${bg}">
+      <div style="font-weight:700;font-size:13px;color:${col};margin-bottom:8px">${SLABEL[s.tipo]||s.tipo}
+        ${s.stato?`<span style="font-size:10px;font-weight:600;background:${s.stato==='Attivo'?'#EAF3DE':s.stato==='Scaduto'?'#FAEAE8':'#FDF4DC'};color:${s.stato==='Attivo'?'#2F5038':s.stato==='Scaduto'?'#7C1A1A':'#6B4800'};padding:2px 7px;border-radius:8px;margin-left:6px">${s.stato}</span>`:''}
+      </div>
+      <div class="d-grid">
+        ${F('Fornitore',s.fornitore)}${F('Codice contratto',s.codice,true)}
+        ${F('Data inizio',fmtDate(s.inizio))}${F('Data scadenza',fmtDate(s.scadenza))}
+        ${s.valore?F('Valore mensile','€ '+parseFloat(s.valore).toFixed(2)):''}
+        ${extra}
+        ${F('Note',s.note)}
+      </div>
+    </div>`;
+  }).join('') : '<div style="text-align:center;padding:2rem;color:#B0A080;font-size:12px">Nessun servizio aggiuntivo registrato<br><span style="font-size:11px">Modifica il cliente per aggiungere Telefonia, Fotovoltaico, Assicurazione, Noleggio...</span></div>';
+
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -1613,8 +2301,8 @@ function exportCSV(){
                   'Codice PDR 2','Indirizzo PDR 2','Fornitore uscente PDR 2','Fornitore entrante PDR 2','Inizio PDR 2','Scadenza PDR 2','Prezzo PDR 2'];
   const hdr=['ID','Nome','Tipo cliente','CF','P.IVA','ATECO','Sede legale','Legale rapp.','PEC','IBAN az.','Int.IBAN az.',
     'Tel','Email','Residenza','Doc.tipo','Doc.num','Doc.luogo','Doc.emissione','Doc.scadenza',
-    'IBAN','Int.IBAN','Tipo','Fornitore','Stato','Tipo operazione','Valore','Prezzo',
-    'Inizio','Scadenza','Att.contratto','Att.fornitura','Stato pagamento',
+    'IBAN','Int.IBAN','Tipo','Fornitore','Cod.contratto','Stato','Tipo operazione','Valore','Prezzo',
+    'Inizio','Scadenza','Att.fornitura luce','Att.fornitura gas','Stato pagamento',
     'Bolletta luce','Pag.luce','Bolletta gas','Pag.gas',
     'Piano tel','N.contr.tel','Polizza','Targa ass','Targa auto','N.noleggio','Piano auto',
     'Cat.comune','Cat.foglio','Cat.particella','Cat.sub','Cat.categoria','Cat.reg',
@@ -1636,8 +2324,8 @@ function exportCSV(){
     ];
     return [r.id,r.nome,r.tipo_cliente,r.cf,r.piva||'',r.ateco||'',r.sede_legale||'',r.legale_rapp||'',r.pec||'',r.iban_az||'',r.iban_az_int||'',
       r.tel,r.email,r.residenza,r.doc_tipo||'',r.doc_num||'',r.doc_luogo||'',r.doc_emissione||'',r.doc_scadenza||'',
-      r.iban||'',r.iban_int||'',TIPOLABEL[r.tipo]||r.tipo,r.fornitore,r.stato,TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'',
-      r.valore,r.prezzo,r.inizio,r.scadenza,r.data_att_contratto||'',r.data_att_fornitura||'',r.pagamento_stato||'',
+      r.iban||'',r.iban_int||'',TIPOLABEL[r.tipo]||r.tipo,r.fornitore,r.codice_contratto||'',r.stato,TIPO_OP_LABEL[r.tipo_op]||r.tipo_op||'',
+      r.valore,r.prezzo,r.inizio,r.scadenza,r.data_att_fornitura_luce||'',r.data_att_fornitura_gas||'',r.pagamento_stato||'',
       r.bolletta_luce||'',r.pagamento_luce||'',r.bolletta_gas||'',r.pagamento_gas||'',
       r.piano||'',r.ncontratto||'',r.polizza||'',r.targa||'',r.targa_auto||'',r.nnoleggio||'',r.piano_auto||'',
       r.cat_comune||'',r.cat_foglio||'',r.cat_particella||'',r.cat_sub||'',r.cat_categoria||'',r.cat_reg||'',
@@ -1691,7 +2379,7 @@ function exportExcel(){
     // ── Foglio principale: tutto in uno (per reimport corretto) ──
     var hMain=[
       'Nome','CF','P.IVA','Tel','Email','Residenza','Tipo cliente','Tipo servizio','Fornitore',
-      'Stato','Tipo operazione','Valore','Prezzo','Inizio','Scadenza','Att.contratto','Att.fornitura',
+      'Stato','Tipo operazione','Valore','Prezzo','Inizio','Scadenza','Att.fornitura luce','Att.fornitura gas',
       'Stato pagamento','Bolletta luce','Pag.luce','Bolletta gas','Pag.gas','Note',
       // Documento
       'Doc.tipo','Doc.num','Doc.luogo','Doc.emissione','Doc.scadenza',
@@ -1721,7 +2409,7 @@ function exportExcel(){
         r.tipo_cliente==='business'?'Business':'Residenziale',
         TIPOMAP[r.tipo]||r.tipo||'',forn,r.stato||'',
         TOPMAP[r.tipo_op]||r.tipo_op||'',r.valore||'',r.prezzo||'',
-        r.inizio||'',r.scadenza||'',r.data_att_contratto||'',r.data_att_fornitura||'',
+        r.inizio||'',r.scadenza||'',r.data_att_fornitura_luce||'',r.data_att_fornitura_gas||'',
         r.pagamento_stato||'',r.bolletta_luce||'',r.pagamento_luce||'',r.bolletta_gas||'',r.pagamento_gas||'',
         (r.note||'').replace(/\n/g,' '),
         // Documento
@@ -1902,6 +2590,7 @@ function eseguiRestore() {
       iban: row['IBAN'] || '',
       iban_int: row['Int.IBAN'] || '',
       fornitore: row['Fornitore'] || '',
+      codice_contratto: row['Cod.contratto'] || '',
       stato: row['Stato'] || 'Proposta',
       tipo_op: row['Tipo operazione'] || '',
       tipo: tipo,
@@ -1909,8 +2598,8 @@ function eseguiRestore() {
       prezzo: row['Prezzo'] || '',
       inizio: row['Inizio'] || '',
       scadenza: row['Scadenza'] || '',
-      data_att_contratto: row['Att.contratto'] || '',
-      data_att_fornitura: row['Att.fornitura'] || '',
+      data_att_fornitura_luce: row['Att.fornitura luce'] || row['Att.contratto'] || '',
+      data_att_fornitura_gas: row['Att.fornitura gas'] || row['Att.fornitura'] || '',
       pagamento_stato: row['Stato pagamento'] || '',
       bolletta_luce: row['Bolletta luce'] || '',
       pagamento_luce: row['Pag.luce'] || '',
@@ -1972,7 +2661,7 @@ function eseguiRestore() {
             durata: '',
             data_inizio: rec.inizio,
             data_scadenza: rec.scadenza,
-            data_attivazione: rec.data_att_fornitura,
+            data_attivazione: rec.data_att_fornitura_luce || rec.data_att_fornitura,
             catastali: '',
           });
         }
@@ -2026,14 +2715,15 @@ var CRM_FIELDS = [
   {key:'email',        label:'Email'},
   {key:'residenza',    label:'Indirizzo residenza'},
   {key:'fornitore',    label:'Fornitore'},
+  {key:'codice_contratto', label:'Codice contratto'},
   {key:'stato',        label:'Stato pratica'},
   {key:'tipo_op',      label:'Tipo operazione (switch/voltura...)'},
   {key:'valore',       label:'Valore mensile (€)'},
   {key:'prezzo',       label:'Prezzo offerta'},
   {key:'inizio',       label:'Data inizio contratto'},
   {key:'scadenza',     label:'Data scadenza contratto'},
-  {key:'data_att_contratto', label:'Data attivazione contratto'},
-  {key:'data_att_fornitura', label:'Data attivazione fornitura'},
+  {key:'data_att_fornitura_luce', label:'Data attivazione fornitura Luce ⚡'},
+  {key:'data_att_fornitura_gas', label:'Data attivazione fornitura Gas 🔥'},
   {key:'pagamento_stato', label:'Stato pagamento'},
   {key:'pod',          label:'Codice POD (luce)'},
   {key:'pod2',         label:'Codice POD 2 (luce)'},
@@ -2048,8 +2738,12 @@ var CRM_FIELDS = [
   {key:'fornitore_entrante',  label:'Fornitore entrante'},
   {key:'potenza',      label:'Potenza kW'},
   {key:'consumo',      label:'Consumo annuo (kWh/mc)'},
-  {key:'bolletta',     label:'Tipo bolletta (web/cartacea)'},
-  {key:'pagamento_mod',label:'Modalità pagamento (iban/bollettino...)'},
+  {key:'bolletta_luce', label:'Bolletta luce (web/cartacea)'},
+  {key:'pagamento_luce',label:'Pagamento luce (domiciliazione/iban/bollettino...)'},
+  {key:'bolletta_gas',  label:'Bolletta gas (web/cartacea)'},
+  {key:'pagamento_gas', label:'Pagamento gas (domiciliazione/iban/bollettino...)'},
+  {key:'bolletta',      label:'Tipo bolletta generico (web/cartacea)'},
+  {key:'pagamento_mod', label:'Modalità pagamento generico (iban/bollettino...)'},
   {key:'piano',        label:'Piano / Tariffa telefonia'},
   {key:'polizza',      label:'Numero polizza assicurazione'},
   {key:'targa',        label:'Targa veicolo'},
@@ -2131,17 +2825,22 @@ var AUTOMAP_RULES = [
   {field:'pdr',          words:['codice pdr 1','codice pdr (gas)','codice pdr','pdr','matricola gas']},
   // ── CONTRATTO ──
   {field:'tipo_op',     words:['tipo integration case','tipo integration','prestazione','switching','switch in','voltura','subentro','tipo operazione','tipo op.','migrazione','formula']},
+  {field:'codice_contratto', words:['cod.contratto','codice contratto','n. contratto','numero contratto','cod contratto','contract code','contract id','id contratto']},
   {field:'stato',       words:['stato pdc','stato otp','stato case','stato contratto','avanzamento','fase','stato','status']},
   {field:'inizio',      words:['data presunta inizio','data firma','data inizio','inizio','start','decorrenza','data conferma']},
   {field:'scadenza',    words:['scadenza','expiry','fine contratto']},
-  {field:'data_att_contratto', words:['data firma','data creazione','data attivazione contratto']},
-  {field:'data_att_fornitura', words:['data presunta inizio fornitura','data attivazione fornitura','attivazione fornitura']},
+  {field:'data_att_fornitura_luce', words:['data firma','data creazione','data attivazione contratto','attivazione luce','att fornitura luce']},
+  {field:'data_att_fornitura_gas', words:['data presunta inizio fornitura','data attivazione fornitura','attivazione fornitura','attivazione gas','att fornitura gas']},
   // ── OFFERTA / PREZZO ──
   {field:'prezzo',      words:['prezzo','offerta','tariffa','spread','price']},
   {field:'valore',      words:['valore','importo','canone','rata','mensile','gettone']},
   // ── PAGAMENTO ──
-  {field:'bolletta',    words:['contract account','canale di invio','bolletta','fattura','invio']},
-  {field:'pagamento_mod',words:['billing profile','modalità di pagamento','modalita di pagamento','scaglione','pagamento','fatturazione','payment']},
+  {field:'bolletta_luce', words:['bolletta luce','invio luce','canale invio luce','fattura luce']},
+  {field:'bolletta_gas',  words:['bolletta gas','invio gas','canale invio gas','fattura gas']},
+  {field:'pagamento_luce',words:['pag.luce','pagamento luce','modalità pagamento luce','pagamento ee']},
+  {field:'pagamento_gas', words:['pag.gas','pagamento gas','modalità pagamento gas','pagamento gas']},
+  {field:'bolletta',      words:['contract account','canale di invio','bolletta','fattura','invio']},
+  {field:'pagamento_mod', words:['billing profile','modalità di pagamento','modalita di pagamento','scaglione','pagamento','fatturazione','payment']},
   {field:'pagamento_stato',words:['causa ko','stato pagamento','stato pag.','stato pag','ko']},
   {field:'iban',        words:['iban']},
   {field:'iban_int',    words:['intestatario iban','int.iban','titolare iban','delegato']},
@@ -2156,7 +2855,15 @@ var AUTOMAP_RULES = [
 ];
 
 function autoMapColumn(colName) {
-  var low = colName.toLowerCase();
+  var low = colName.toLowerCase().trim();
+  // Prima passa: match esatto
+  for (var i=0; i<AUTOMAP_RULES.length; i++) {
+    var rule = AUTOMAP_RULES[i];
+    for (var w=0; w<rule.words.length; w++) {
+      if (low === rule.words[w].toLowerCase()) return rule.field;
+    }
+  }
+  // Seconda passa: match parziale (indexOf)
   for (var i=0; i<AUTOMAP_RULES.length; i++) {
     var rule = AUTOMAP_RULES[i];
     for (var w=0; w<rule.words.length; w++) {
@@ -2345,7 +3052,7 @@ function eseguiImport() {
     return'switch';
   }
   function normalBoll(s){var sl=(s||'').toLowerCase();return sl.indexOf('web')>=0?'web':sl.indexOf('cart')>=0?'cartacea':'';}
-  function normalPag(s){var sl=(s||'').toLowerCase();return sl.indexOf('dom')>=0||sl.indexOf('rid')>=0?'domiciliazione':sl.indexOf('boll')>=0?'bollettino':sl.indexOf('bon')>=0?'bonifico':'';}
+  function normalPag(s){var sl=(s||'').toLowerCase();return sl.indexOf('dom')>=0||sl.indexOf('rid')>=0||sl==='iban'||sl.indexOf('sdd')>=0?'domiciliazione':sl.indexOf('boll')>=0?'bollettino':sl.indexOf('bon')>=0?'bonifico':sl.indexOf('iban')>=0?'domiciliazione':''}
   function isPOD(c){return c&&String(c).toUpperCase().startsWith('IT');}
   function isPDR(c){return c&&String(c).trim().length>=10&&/^[0-9]+$/.test(String(c).trim());}
 
@@ -2368,11 +3075,15 @@ function eseguiImport() {
     var campi=['tel','email','residenza','cf','piva','ateco','data_nascita','luogo_nascita',
       'doc_tipo','doc_num','doc_luogo','doc_emissione','doc_scadenza',
       'iban','iban_int','pec','fornitore','stato','tipo_op','valore','prezzo',
-      'inizio','scadenza','data_att_contratto','data_att_fornitura',
+      'inizio','scadenza','data_att_fornitura_luce','data_att_fornitura_gas',
       'pagamento_stato','bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas','note'];
+    // Campi che sovrascrivono sempre (se il nuovo valore è valido)
+    var campiForza=['bolletta_luce','pagamento_luce','bolletta_gas','pagamento_gas','stato','pagamento_stato','iban','iban_int','doc_tipo','doc_num','doc_scadenza'];
     campi.forEach(function(k){
-      if((!dup[k]||dup[k]==='')&&newVals[k]&&newVals[k]!==''){
-        dup[k]=newVals[k]; changed=true;
+      if(newVals[k]&&newVals[k]!==''){
+        if(!dup[k]||dup[k]===''||campiForza.indexOf(k)>=0){
+          if(dup[k]!==newVals[k]){ dup[k]=newVals[k]; changed=true; }
+        }
       }
     });
     // POD/PDR: aggiungi solo quelli nuovi (codice non già presente)
@@ -2395,20 +3106,30 @@ function eseguiImport() {
     var podsSeen={};
     function addPod(codice,tipo,indir,fusc,fentr,finizio,fscad,fprezzo){
       if(!codice)return;
+      // Ignora numeri brevi (1,2,3) che sono vecchi ID interni, non codici reali
+      if(/^\d{1,3}$/.test(String(codice).trim()))return;
       var tp=tipo||(isPOD(codice)?'pod':isPDR(codice)?'pdr':null);
       if(!tp||podsSeen[codice])return;
+      // Bolletta e pagamento: usa campi specifici luce/gas se disponibili
+      var isPodType=tp==='pod';
+      var bollVal=isPodType
+        ? normalBoll(getVal(pr,'bolletta_luce'))||normalBoll(getVal(pr,'bolletta'))
+        : normalBoll(getVal(pr,'bolletta_gas'))||normalBoll(getVal(pr,'bolletta'));
+      var pagVal=isPodType
+        ? normalPag(getVal(pr,'pagamento_luce'))||normalPag(getVal(pr,'pagamento_mod'))
+        : normalPag(getVal(pr,'pagamento_gas'))||normalPag(getVal(pr,'pagamento_mod'));
       podsSeen[codice]={
         tipo:tp,codice:codice,indirizzo:indir||'',
         fornitore_uscente:fusc||'',fornitore_entrante:fentr||'',
         uso:(getVal(pr,'tipo_cliente')||'').toLowerCase().indexOf('non')>=0?'non_residenziale':'residenziale',
         tipo_op:normalTipoOp(getVal(pr,'tipo_op')),
-        bolletta:normalBoll(getVal(pr,'bolletta')),
-        pagamento:normalPag(getVal(pr,'pagamento_mod')),
+        bolletta:bollVal,
+        pagamento:pagVal,
         prezzo:fprezzo||getVal(pr,'prezzo')||'',
         potenza:'',consumo:'',durata:'',
         data_inizio:normalDate(finizio||getVal(pr,'inizio')||''),
         data_scadenza:normalDate(fscad||getVal(pr,'scadenza')||''),
-        data_attivazione:normalDate(getVal(pr,'data_att_fornitura')||''),
+        data_attivazione:normalDate(getVal(pr,'data_att_fornitura_luce')||getVal(pr,'data_att_fornitura')||''),
         catastali:'',
       };
     }
@@ -2447,9 +3168,9 @@ function eseguiImport() {
           bolletta:normalBoll(getVal(row,'bolletta')),
           pagamento:normalPag(getVal(row,'pagamento_mod')),
           prezzo:getVal(row,'prezzo')||'',potenza:'',consumo:'',durata:'',
-          data_inizio:normalDate(getVal(row,'data_att_fornitura')||getVal(row,'inizio')||''),
+          data_inizio:normalDate(getVal(row,'data_att_fornitura_luce')||getVal(row,'data_att_fornitura')||getVal(row,'inizio')||''),
           data_scadenza:normalDate(getVal(row,'scadenza')||''),
-          data_attivazione:normalDate(getVal(row,'data_att_fornitura')||''),
+          data_attivazione:normalDate(getVal(row,'data_att_fornitura_luce')||getVal(row,'data_att_fornitura')||''),
           catastali:'',
         };
       });
@@ -2478,14 +3199,15 @@ function eseguiImport() {
       doc_emissione:normalDate(getVal(pr,'doc_emissione')),doc_scadenza:normalDate(getVal(pr,'doc_scadenza')),
       iban:getVal(pr,'iban'),iban_int:getVal(pr,'iban_int'),pec:getVal(pr,'pec'),
       fornitore:getVal(pr,'fornitore')||getVal(pr,'fornitore_entrante')||'',
+      codice_contratto:getVal(pr,'codice_contratto')||'',
       stato:normalStato(getVal(pr,'stato')),tipo_op:normalTipoOp(getVal(pr,'tipo_op')),
       valore:parseFloat(getVal(pr,'valore'))||0,prezzo:getVal(pr,'prezzo')||'',
-      inizio:normalDate(getVal(pr,'inizio')||getVal(pr,'data_att_fornitura')||''),
+      inizio:normalDate(getVal(pr,'inizio')||getVal(pr,'data_att_fornitura_luce')||getVal(pr,'data_att_fornitura')||''),
       scadenza:normalDate(getVal(pr,'scadenza')||''),
-      data_att_contratto:normalDate(getVal(pr,'data_att_contratto')||getVal(pr,'inizio')||''),
-      data_att_fornitura:normalDate(getVal(pr,'data_att_fornitura')||''),
+      data_att_fornitura_luce:normalDate(getVal(pr,'data_att_fornitura_luce')||getVal(pr,'data_att_contratto')||getVal(pr,'inizio')||''),
+      data_att_fornitura_gas:normalDate(getVal(pr,'data_att_fornitura_gas')||getVal(pr,'data_att_fornitura')||''),
       pagamento_stato:pstat,
-      bolletta_luce:boll0,pagamento_luce:pag0,bolletta_gas:boll0,pagamento_gas:pag0,
+      bolletta_luce:normalBoll(getVal(pr,'bolletta_luce'))||boll0,pagamento_luce:normalPag(getVal(pr,'pagamento_luce'))||pag0,bolletta_gas:normalBoll(getVal(pr,'bolletta_gas'))||boll0,pagamento_gas:normalPag(getVal(pr,'pagamento_gas'))||pag0,
       note:(hasAnnull?'⚠️ Riga Annullamento nel file fornitore. ':'')+getVal(pr,'note'),
     };
 
@@ -2589,6 +3311,82 @@ function saveOfferte() {
   }
 }
 
+
+function openRiepilogoGettoni() {
+  // Imposta mese corrente
+  var oggi = new Date();
+  var mm = String(oggi.getMonth()+1).padStart(2,'0');
+  document.getElementById('rg_mese').value = oggi.getFullYear()+'-'+mm;
+  document.getElementById('riepilogoGettoniModal').classList.add('open');
+  renderRiepilogoGettoni();
+}
+
+function renderRiepilogoGettoni() {
+  var mese = document.getElementById('rg_mese').value; // es. "2025-03"
+  var catFilt = document.getElementById('rg_categoria').value;
+  var statoFilt = document.getElementById('rg_stato').value;
+  var GTLABEL = {luce:'⚡ Luce', gas:'🔥 Gas', dual:'⚡🔥 Dual', rid:'🏦 RID', ricorrente:'🔄 Ricorrente', altro:'📦 Altro'};
+  var GSTATO = {da_pagare:{label:'⏳ Da pagare',col:'#7a4f00',bg:'#FDF4DC'},pagato:{label:'✅ Pagato',col:'#1a5c2a',bg:'#EAF3DE'},ko:{label:'❌ KO',col:'#7C1A1A',bg:'#FAEAE8'}};
+
+  // Raccoglie tutti i gettoni corrispondenti
+  var righe = [];
+  data.forEach(function(r) {
+    (r.gettoni||[]).forEach(function(g) {
+      var compMese = (g.data_competenza||'').substring(0,7);
+      if (mese && compMese !== mese) return;
+      if (catFilt && g.categoria !== catFilt) return;
+      if (statoFilt && g.stato !== statoFilt) return;
+      righe.push({cliente: r.nome, fornitore: r.fornitore||'', g: g});
+    });
+  });
+
+  // Totali per stato
+  var totDaPagare=0, totPagato=0, totKo=0;
+  righe.forEach(function(row){
+    var imp = (parseFloat(row.g.importo)||0)*(parseInt(row.g.quantita)||1);
+    if(row.g.stato==='pagato') totPagato+=imp;
+    else if(row.g.stato==='ko') totKo+=imp;
+    else totDaPagare+=imp;
+  });
+  var totTot = totDaPagare+totPagato+totKo;
+
+  document.getElementById('rg_totali').innerHTML =
+    '<div style="flex:1;background:#FDF4DC;border-radius:8px;padding:8px 12px;text-align:center"><div style="font-size:10px;color:#7a4f00;font-weight:700">⏳ DA PAGARE</div><div style="font-size:16px;font-weight:700;color:#7a4f00">€ '+totDaPagare.toFixed(2)+'</div></div>'
+   +'<div style="flex:1;background:#EAF3DE;border-radius:8px;padding:8px 12px;text-align:center"><div style="font-size:10px;color:#1a5c2a;font-weight:700">✅ PAGATI</div><div style="font-size:16px;font-weight:700;color:#1a5c2a">€ '+totPagato.toFixed(2)+'</div></div>'
+   +'<div style="flex:1;background:#FAEAE8;border-radius:8px;padding:8px 12px;text-align:center"><div style="font-size:10px;color:#7C1A1A;font-weight:700">❌ KO</div><div style="font-size:16px;font-weight:700;color:#7C1A1A">€ '+totKo.toFixed(2)+'</div></div>'
+   +'<div style="flex:1;background:#f0f0f0;border-radius:8px;padding:8px 12px;text-align:center"><div style="font-size:10px;color:#333;font-weight:700">📊 TOTALE</div><div style="font-size:16px;font-weight:700;color:#333">€ '+totTot.toFixed(2)+'</div></div>';
+
+  if (!righe.length) {
+    document.getElementById('rg_lista').innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:13px">Nessun gettone trovato per il periodo selezionato</div>';
+    return;
+  }
+
+  document.getElementById('rg_lista').innerHTML =
+    '<table style="width:100%;font-size:12px;border-collapse:collapse">'
+    +'<thead><tr style="background:#f5f5f5;font-weight:700">'
+    +'<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Cliente</th>'
+    +'<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Tipo gettone</th>'
+    +'<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Categoria</th>'
+    +'<th style="padding:7px 8px;text-align:center;border-bottom:1px solid #ddd">Qtà</th>'
+    +'<th style="padding:7px 8px;text-align:right;border-bottom:1px solid #ddd">Importo</th>'
+    +'<th style="padding:7px 8px;text-align:center;border-bottom:1px solid #ddd">Stato</th>'
+    +'</tr></thead><tbody>'
+    + righe.map(function(row){
+      var g=row.g, st=GSTATO[g.stato]||GSTATO['da_pagare'];
+      var imp = ((parseFloat(g.importo)||0)*(parseInt(g.quantita)||1)).toFixed(2);
+      return '<tr style="border-bottom:1px solid #f0f0f0;background:'+st.bg+'">'
+        +'<td style="padding:6px 8px;font-weight:600">'+row.cliente+(row.fornitore?' <span style="font-size:10px;color:#888">('+row.fornitore+')</span>':'')+'</td>'
+        +'<td style="padding:6px 8px">'+(GTLABEL[g.tipo]||g.tipo)+'</td>'
+        +'<td style="padding:6px 8px;font-size:11px;color:#555">'+g.categoria+'</td>'
+        +'<td style="padding:6px 8px;text-align:center">'+(parseInt(g.quantita)||1)+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;font-weight:700">€ '+imp+'</td>'
+        +'<td style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:'+st.col+'">'+st.label+'</td>'
+        +'</tr>'
+        +(g.note?'<tr style="background:'+st.bg+'"><td colspan="6" style="padding:0 8px 6px;font-size:10px;color:#888;font-style:italic">'+g.note+'</td></tr>':'');
+    }).join('')
+    +'</tbody></table>';
+}
+
 function openOfferte() {
   renderOfferte();
   document.getElementById('offerteModal').classList.add('open');
@@ -2599,11 +3397,21 @@ function aggiungiOfferta() {
   var fornitore = document.getElementById('off_fornitore').value.trim();
   var nome = document.getElementById('off_nome').value.trim();
   var prezzo = document.getElementById('off_prezzo').value.trim();
+  var sconto_euro = document.getElementById('off_sconto_euro').value.trim();
+  var sconto_perc = document.getElementById('off_sconto_perc').value.trim();
+  var rid = document.getElementById('off_rid').value;
+  var bollweb = document.getElementById('off_bollweb').value;
+  var scad_promo = document.getElementById('off_scad_promo').value;
   if (!nome || !prezzo) { alert('Inserire almeno nome offerta e prezzo.'); return; }
-  offerte.push({ id: Date.now(), tipo, fornitore, nome, prezzo, attiva: true });
+  offerte.push({ id: Date.now(), tipo, fornitore, nome, prezzo, sconto_euro, sconto_perc, rid, bollweb, scad_promo, attiva: true });
   saveOfferte();
   document.getElementById('off_nome').value = '';
   document.getElementById('off_prezzo').value = '';
+  document.getElementById('off_sconto_euro').value = '';
+  document.getElementById('off_sconto_perc').value = '';
+  document.getElementById('off_rid').value = '';
+  document.getElementById('off_bollweb').value = '';
+  document.getElementById('off_scad_promo').value = '';
   renderOfferte();
   showToast('Offerta aggiunta ✓');
 }
@@ -2643,7 +3451,12 @@ function renderOfferte() {
       '<td style="padding:8px 10px"><span style="background:' + (TIPO_OFF_BG[o.tipo]||'#f0f0f0') + ';color:' + (TIPO_OFF_COLOR[o.tipo]||'#555') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + (TIPO_OFF_LABEL[o.tipo]||o.tipo) + '</span></td>' +
       '<td style="padding:8px 10px;font-weight:600">' + (o.fornitore||'-') + '</td>' +
       '<td style="padding:8px 10px">' + o.nome + '</td>' +
-      '<td style="padding:8px 10px"><input type="text" value="' + o.prezzo.replace(/"/g,'&quot;') + '" data-id="' + oid + '" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;width:140px;font-family:Arial" class="off-prezzo-input"></td>' +
+      '<td style="padding:8px 10px"><input type="text" value="' + o.prezzo.replace(/"/g,'&quot;') + '" data-id="' + oid + '" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;width:120px;font-family:Arial" class="off-prezzo-input"></td>' +
+      '<td style="padding:8px 10px;text-align:center">' + (o.sconto_euro ? '<span style="background:#EAF3DE;color:#27500A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600">€ ' + o.sconto_euro + '</span>' : '<span style="color:#ccc;font-size:11px">–</span>') + '</td>' +
+      '<td style="padding:8px 10px;text-align:center">' + (o.sconto_perc ? '<span style="background:#EAF3DE;color:#27500A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600">' + o.sconto_perc + '%</span>' : '<span style="color:#ccc;font-size:11px">–</span>') + '</td>' +
+      '<td style="padding:8px 10px;text-align:center">' + (o.rid==='si'?'<span style="color:#27500A;font-size:13px">✅</span>':(o.rid==='no'?'<span style="color:#791F1F;font-size:13px">❌</span>':'<span style="color:#ccc;font-size:11px">–</span>')) + '</td>' +
+      '<td style="padding:8px 10px;text-align:center">' + (o.bollweb==='si'?'<span style="color:#27500A;font-size:13px">✅</span>':(o.bollweb==='no'?'<span style="color:#791F1F;font-size:13px">❌</span>':'<span style="color:#ccc;font-size:11px">–</span>')) + '</td>' +
+      '<td style="padding:8px 10px;font-size:11px;white-space:nowrap">' + (o.scad_promo ? '<span style="background:#FEF3E2;color:#633806;padding:2px 7px;border-radius:8px;font-weight:600">' + fmtDate(o.scad_promo) + '</span>' : '<span style="color:#ccc">–</span>') + '</td>' +
       '<td style="padding:8px 10px"><button data-id="' + oid + '" style="background:#FCEBEB;color:#791F1F;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer" class="off-del-btn">✕</button></td>';
     tb.appendChild(row);
     row.querySelector('.off-prezzo-input').addEventListener('change', function(){
@@ -2695,9 +3508,24 @@ function loadTemplates() {
 function salvaTemplateMsg() {
   var key = document.getElementById('msg_preview_label').textContent;
   var testo = document.getElementById('msg_text').value;
+  // Sostituisce TUTTE le occorrenze del nome del cliente con {{NOME}}
+  // così il template funziona correttamente per qualsiasi cliente
+  if (msgRecord && msgRecord.nome) {
+    var nomeEscaped = msgRecord.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    testo = testo.replace(new RegExp(nomeEscaped, 'g'), '{{NOME}}');
+  }
   customMsgTemplates[key] = testo;
   localStorage.setItem('crm_msg_templates', JSON.stringify(customMsgTemplates));
-  showToast('Template messaggio salvato ✓');
+  showToast('Template salvato ✓ — il nome viene adattato ad ogni cliente');
+}
+
+function cancellaTemplateMsg() {
+  var key = document.getElementById('msg_preview_label').textContent;
+  if (!customMsgTemplates[key]) { showToast('Nessun template salvato per questo messaggio'); return; }
+  if (!confirm('Cancellare il template salvato per "' + key + '"?\nVerrà ripristinato il testo originale.')) return;
+  delete customMsgTemplates[key];
+  localStorage.setItem('crm_msg_templates', JSON.stringify(customMsgTemplates));
+  showToast('Template cancellato ✓ — verrà usato il testo originale');
 }
 
 function salvaTemplateLett() {
@@ -2716,7 +3544,12 @@ function initCustomTemplates() {
     _origSelectMsg(key, begaIdx);
     var label = document.getElementById('msg_preview_label').textContent;
     if (customMsgTemplates[label]) {
-      document.getElementById('msg_text').value = customMsgTemplates[label];
+      // Ripristina il template sostituendo {{NOME}} con il nome del cliente corrente
+      var tpl = customMsgTemplates[label];
+      if (msgRecord && msgRecord.nome) {
+        tpl = tpl.split('{{NOME}}').join(msgRecord.nome);
+      }
+      document.getElementById('msg_text').value = tpl;
     }
   };
   var _origSelLett = selezionaLettera;
@@ -2732,60 +3565,159 @@ function initCustomTemplates() {
 // ── CAMPANELLA SCADENZE ──
 function checkScadenze() {
   var oggi = new Date(); oggi.setHours(0,0,0,0);
-  var scadenti = [];
-  
+  var scaduti = [];    // già scaduti
+  var urgenti = [];    // scadono oggi o entro 7 gg
+  var inArrivo = [];   // scadono tra 8 e 30 gg
+  var pendenti = [];   // conferma contratto e quality call in sospeso
+
   data.forEach(function(r) {
-    // Controlla scadenza contratto
-    var dates = [r.scadenza];
-    // Controlla scadenze POD/PDR
-    (r.pods||[]).forEach(function(p) { if(p.data_scadenza) dates.push(p.data_scadenza); });
-    
-    dates.forEach(function(dateStr) {
-      if (!dateStr) return;
-      var d = new Date(dateStr); d.setHours(0,0,0,0);
-      var diff = Math.round((d - oggi) / 86400000);
-      if (diff >= 0 && diff <= 7) {
-        scadenti.push({ nome: r.nome, tipo: TIPOLABEL[r.tipo]||r.tipo, scadenza: dateStr, giorni: diff });
+    // Raccoglie tutte le date di scadenza (contratto + ogni POD/PDR)
+    var dateEntries = [];
+    if(r.scadenza) dateEntries.push({label: TIPOLABEL[r.tipo]||r.tipo, data: r.scadenza});
+    (r.pods||[]).forEach(function(p) {
+      if(p.data_scadenza){
+        var icon = p.tipo==='pod'?'⚡':'🔥';
+        var codice = p.codice ? ' ('+p.codice+')' : '';
+        dateEntries.push({label: icon+(TIPOLABEL[p.tipo]||p.tipo)+codice, data: p.data_scadenza});
       }
     });
+
+    dateEntries.forEach(function(entry) {
+      var d = new Date(entry.data); d.setHours(0,0,0,0);
+      var diff = Math.round((d - oggi) / 86400000);
+      var item = { nome: r.nome, tipo: entry.label, scadenza: entry.data, giorni: diff, id: r.id };
+      if (diff < 0) {
+        scaduti.push(item);
+      } else if (diff <= 7) {
+        urgenti.push(item);
+      } else if (diff <= 30) {
+        inArrivo.push(item);
+      }
+    });
+
+    // Controlla scadenze altri servizi
+    (r.servizi||[]).filter(s=>s.scadenza).forEach(function(s) {
+      var d = new Date(s.scadenza); d.setHours(0,0,0,0);
+      var diff = Math.round((d - oggi) / 86400000);
+      var slabel = {tel:'📱 Telefonia', fotovoltaico:'☀️ Fotovoltaico', ass:'🛡 Assicurazione', auto:'🚗 Noleggio', altro:'📦 Servizio'}[s.tipo]||s.tipo;
+      var item = { nome: r.nome, tipo: slabel+(s.fornitore?' ('+s.fornitore+')':''), scadenza: s.scadenza, giorni: diff, id: r.id };
+      if (diff < 0) scaduti.push(item);
+      else if (diff <= 7) urgenti.push(item);
+      else if (diff <= 30) inArrivo.push(item);
+    });
+    // Controlla pratiche aperte con data scadenza
+    (r.begas||[]).filter(b=>b.stato==='aperta'&&b.data_scadenza).forEach(function(b) {
+      var d = new Date(b.data_scadenza); d.setHours(0,0,0,0);
+      var diff = Math.round((d - oggi) / 86400000);
+      var label = '⚠ Pratica: ' + b.tipo + (b.fornitore?' ('+b.fornitore+')':'');
+      var item = { nome: r.nome, tipo: label, scadenza: b.data_scadenza, giorni: diff, id: r.id, isPratica: true };
+      if (diff < 0) scaduti.push(item);
+      else if (diff <= 7) urgenti.push(item);
+      else if (diff <= 30) inArrivo.push(item);
+    });
+    if (r.conferma_contratto === 'da_confermare') {
+      pendenti.push({ nome: r.nome, msg: '🖊 Contratto da confermare' });
+    } else if (r.conferma_contratto === 'rifiutato') {
+      pendenti.push({ nome: r.nome, msg: '❌ Contratto rifiutato' });
+    }
+    // Controlla quality call
+    if (r.quality_call === 'da_effettuare') {
+      pendenti.push({ nome: r.nome, msg: '📞 Quality call da effettuare' });
+    } else if (r.quality_call === 'non_risposto') {
+      pendenti.push({ nome: r.nome, msg: '🔁 Quality call: non risposto / da richiamare' });
+    }
   });
 
-  // Remove duplicates
-  var seen = {};
-  scadenti = scadenti.filter(function(s) {
-    var k = s.nome + s.scadenza;
-    if (seen[k]) return false;
-    seen[k] = true;
-    return true;
-  });
+  // Deduplicazione per ogni lista
+  function dedup(arr) {
+    var seen = {};
+    return arr.filter(function(s) {
+      var k = s.nome + s.scadenza + s.tipo;
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
+  }
+  scaduti  = dedup(scaduti).sort(function(a,b){ return new Date(b.scadenza)-new Date(a.scadenza); });
+  urgenti  = dedup(urgenti).sort(function(a,b){ return new Date(a.scadenza)-new Date(b.scadenza); });
+  inArrivo = dedup(inArrivo).sort(function(a,b){ return new Date(a.scadenza)-new Date(b.scadenza); });
 
-  if (!scadenti.length) return;
+  if (!scaduti.length && !urgenti.length && !inArrivo.length && !pendenti.length) {
+    showToast('Nessun avviso attivo ✓'); return;
+  }
 
-  // ── Banner dentro il CRM ──
+  // ── Banner ──
   var existing = document.getElementById('scad_banner');
   if (existing) existing.remove();
-  
+
   var banner = document.createElement('div');
   banner.id = 'scad_banner';
-  banner.style.cssText = 'background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#633806;cursor:pointer';
-  var items = scadenti.slice(0,5).map(function(s) {
-    return '🔔 <strong>' + s.nome + '</strong> (' + s.tipo + ') — scade ' + (s.giorni===0?'<strong>OGGI</strong>':s.giorni===1?'domani':'tra '+s.giorni+' giorni') + ' (' + fmtDate(s.scadenza) + ')';
-  }).join('<br>');
-  banner.innerHTML = '<div style="font-weight:700;margin-bottom:4px">⚠️ Scadenze nei prossimi 7 giorni</div>' + items +
-    (scadenti.length > 5 ? '<br>...e altri ' + (scadenti.length-5) : '') +
-    '<div style="font-size:10px;color:#aaa;margin-top:4px">Clicca per chiudere</div>';
-  banner.onclick = function() { this.remove(); };
-  
+  banner.style.cssText = 'background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#633806';
+
+  var html = '';
+
+  // Sezione contratti scaduti
+  if (scaduti.length) {
+    html += '<div style="font-weight:700;margin-bottom:4px;color:#791F1F">❌ Contratti già scaduti ('+scaduti.length+')</div>';
+    html += scaduti.map(function(s) {
+      return '❌ <strong style="cursor:pointer;text-decoration:underline" onclick="openDetail('+s.id+')">' + s.nome + '</strong>'
+        + ' <span style="font-size:10px;color:#555">('+s.tipo+')</span>'
+        + ' — scaduto il <strong>' + fmtDate(s.scadenza) + '</strong>'
+        + ' <span style="color:#791F1F">('+Math.abs(s.giorni)+' gg fa)</span>';
+    }).join('<br>');
+    if (urgenti.length||inArrivo.length||pendenti.length)
+      html += '<hr style="border:none;border-top:1px solid #FAC775;margin:6px 0">';
+  }
+
+  // Sezione urgenti (oggi + 7gg)
+  if (urgenti.length) {
+    html += '<div style="font-weight:700;margin-bottom:4px;color:#633806">⚠ In scadenza entro 7 giorni ('+urgenti.length+')</div>';
+    html += urgenti.map(function(s) {
+      var quando = s.giorni===0?'<strong>OGGI</strong>':s.giorni===1?'domani':'tra '+s.giorni+' giorni';
+      var icon = s.isPratica ? '⚠️' : '🔔';
+      return icon + ' <strong style="cursor:pointer;text-decoration:underline" onclick="openDetail('+s.id+')">' + s.nome + '</strong>'
+        + ' <span style="font-size:10px;color:#'+(s.isPratica?'7a3a00':'555')+'">('+s.tipo+')</span>'
+        + ' — ' + quando + ' <span style="color:#888">('+fmtDate(s.scadenza)+')</span>';
+    }).join('<br>');
+    if (inArrivo.length||pendenti.length)
+      html += '<hr style="border:none;border-top:1px solid #FAC775;margin:6px 0">';
+  }
+
+  // Sezione in arrivo (8-30gg)
+  if (inArrivo.length) {
+    html += '<div style="font-weight:700;margin-bottom:4px;color:#0C447C">📅 In scadenza entro 30 giorni ('+inArrivo.length+')</div>';
+    html += inArrivo.map(function(s) {
+      var icon = s.isPratica ? '⚠️' : '📅';
+      return icon + ' <strong style="cursor:pointer;text-decoration:underline" onclick="openDetail('+s.id+')">' + s.nome + '</strong>'
+        + ' <span style="font-size:10px;color:#'+(s.isPratica?'7a3a00':'555')+'">('+s.tipo+')</span>'
+        + ' — tra '+s.giorni+' giorni <span style="color:#888">('+fmtDate(s.scadenza)+')</span>';
+    }).join('<br>');
+    if (pendenti.length)
+      html += '<hr style="border:none;border-top:1px solid #FAC775;margin:6px 0">';
+  }
+
+  // Sezione azioni in sospeso
+  if (pendenti.length) {
+    html += '<div style="font-weight:700;margin-bottom:4px">📋 Azioni in sospeso ('+pendenti.length+')</div>';
+    html += pendenti.slice(0,8).map(function(p) {
+      return p.msg + ' — <strong>' + p.nome + '</strong>';
+    }).join('<br>');
+    if (pendenti.length > 8) html += '<br>...e altri ' + (pendenti.length-8);
+  }
+
+  html += '<div style="font-size:10px;color:#aaa;margin-top:8px;cursor:pointer" onclick="document.getElementById(\'scad_banner\').remove()">✕ Clicca per chiudere</div>';
+  banner.innerHTML = html;
+
   var main = document.querySelector('.main');
   if (main) main.insertBefore(banner, main.firstChild);
 
-  // ── Notifica browser ──
-  if ('Notification' in window) {
+  // ── Notifica browser (solo urgenti) ──
+  if ('Notification' in window && urgenti.length) {
     if (Notification.permission === 'granted') {
-      inviaNotifiche(scadenti);
+      inviaNotifiche(urgenti);
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(function(perm) {
-        if (perm === 'granted') inviaNotifiche(scadenti);
+        if (perm === 'granted') inviaNotifiche(urgenti);
       });
     }
   }
@@ -2817,8 +3749,25 @@ function addCampanellaBtn() {
   btn.className = 'btn btn-secondary';
   btn.style.cssText = 'font-size:16px;padding:5px 10px;position:relative';
   btn.title = 'Controlla scadenze';
-  btn.innerHTML = '🔔';
-  btn.onclick = function() { checkScadenze(); showToast('Scadenze verificate'); };
+
+  // Calcola badge: scaduti + urgenti (entro 7gg)
+  var oggi = new Date(); oggi.setHours(0,0,0,0);
+  var nAvvisi = 0;
+  data.forEach(function(r){
+    var dates = r.scadenza ? [r.scadenza] : [];
+    (r.pods||[]).forEach(function(p){ if(p.data_scadenza) dates.push(p.data_scadenza); });
+    dates.forEach(function(ds){
+      var d = new Date(ds); d.setHours(0,0,0,0);
+      var diff = Math.round((d - oggi) / 86400000);
+      if(diff <= 7) nAvvisi++; // scaduti (diff<0) + urgenti (0-7)
+    });
+  });
+
+  var badgeHtml = nAvvisi > 0
+    ? '<span style="position:absolute;top:-4px;right:-4px;background:#791F1F;color:#fff;border-radius:50%;font-size:9px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 2px">'+nAvvisi+'</span>'
+    : '';
+  btn.innerHTML = '🔔' + badgeHtml;
+  btn.onclick = function() { checkScadenze(); };
   var topbarRight = document.querySelector('.topbar-right');
   if (topbarRight) topbarRight.insertBefore(btn, topbarRight.firstChild);
 }
@@ -3067,6 +4016,42 @@ const MSGS = {
     tpl: function(r, b) {
       return 'Buongiorno ' + r.nome + ',\n\nIn riferimento alla pratica *' + (b ? b.tipo : '[tipo pratica]') + '*, per procedere abbiamo bisogno dei seguenti documenti:\n\n• [DOCUMENTO 1]\n• [DOCUMENTO 2]\n• [DOCUMENTO 3]\n\nInviarci la documentazione entro [DATA LIMITE] a:\n[EMAIL] oppure WhatsApp [TELEFONO]\n\nGrazie per la collaborazione.\nGruppo tu.telati — Emanuele e Carmen';
     }
+  },
+  avviso_scadenza_libero: {
+    label: '✏️ Avviso scadenza libero (WhatsApp)',
+    tpl: function(r) {
+      return 'Buongiorno ' + r.nome + ',\n\n[TESTO LIBERO]\n\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano (nei pressi della Farmacia Marconi)';
+    }
+  },
+  offerta_conveniente: {
+    label: '💡 Offerta più conveniente',
+    tpl: function(r) {
+      var tipo = (typeof TIPOLABEL !== 'undefined' && TIPOLABEL[r.tipo]) ? TIPOLABEL[r.tipo] : (r.tipo || '[Luce/Gas]');
+      return 'Buongiorno ' + r.nome + ',\n\nabbiamo trovato un\'offerta *' + tipo + '* con *[NUOVO FORNITORE]* a *[PREZZO]* che Le farebbe risparmiare rispetto al contratto attuale.\n\nLa contattiamo entro *[DATA]* per bloccarla prima che scada.\n\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano (nei pressi della Farmacia Marconi)';
+    }
+  },
+  offerta_risparmio: {
+    label: '📉 Risparmio stimato (con cifre)',
+    tpl: function(r) {
+      var tipo = (typeof TIPOLABEL !== 'undefined' && TIPOLABEL[r.tipo]) ? TIPOLABEL[r.tipo] : (r.tipo || '[Luce/Gas]');
+      var forn = r.fornitore || '[fornitore attuale]';
+      return 'Buongiorno ' + r.nome + ',\n\nabbiamo individuato per Lei un\'offerta *' + tipo + '* con *[NUOVO FORNITORE]* a *[PREZZO €/kWh o €/Smc]*.\n\nRispetto al Suo contratto attuale con *' + forn + '* potrebbe risparmiare circa *[€ STIMATI] all\'anno*.\n\nL\'offerta è disponibile fino al *[DATA SCADENZA OFFERTA]* — se interessato/a ci contatti al più presto!\n\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano (nei pressi della Farmacia Marconi)';
+    }
+  },
+  offerta_cambio_anticipato: {
+    label: '⚡ Cambio anticipato conveniente',
+    tpl: function(r) {
+      var forn = r.fornitore || '[fornitore attuale]';
+      return 'Buongiorno ' + r.nome + ',\n\nsappiamo che il Suo contratto con *' + forn + '* è ancora attivo, ma abbiamo un\'offerta così vantaggiosa da rendere conveniente il cambio anche prima della scadenza naturale.\n\n✅ *Nessuna penale* per il recesso anticipato nel mercato libero.\n\nLa chiamiamo presto per valutarla insieme senza impegno.\n\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano (nei pressi della Farmacia Marconi)';
+    }
+  },
+  offerta_confronto: {
+    label: '🔄 Confronto diretto fornitore',
+    tpl: function(r) {
+      var forn = r.fornitore || '[fornitore attuale]';
+      var tipo = (typeof TIPOLABEL !== 'undefined' && TIPOLABEL[r.tipo]) ? TIPOLABEL[r.tipo] : (r.tipo || '[Luce/Gas]');
+      return 'Buongiorno ' + r.nome + ',\n\nabbiamo fatto un confronto sul Suo contratto *' + tipo + '*:\n\n🔴 *' + forn + '* (attuale): [PREZZO ATTUALE]\n🟢 *[NUOVO FORNITORE]*: [PREZZO NUOVO]\n\nLa differenza è di circa *[X €/mese]*, ovvero *[X €/anno]* di risparmio.\n\nVale la pena valutarla insieme — la contattiamo presto!\n\nUn caro saluto da Carmen e Emanuele 🌿\nGruppo Tutelati - Largo Guglielmo Marconi, 8/A - Valenzano (nei pressi della Farmacia Marconi)';
+    }
   }
 };
 
@@ -3080,8 +4065,12 @@ function openMessages(begaIdx) {
   const row = document.getElementById('msg_btn_row');
   const begas = r.begas || [];
   const btns = [];
-  ['rinnovo_wa','rinnovo_email','rinnovo_ok','rinnovo_invito'].forEach(k => {
+  ['rinnovo_wa','rinnovo_email','rinnovo_ok','rinnovo_invito','avviso_scadenza_libero'].forEach(k => {
     btns.push('<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px" onclick="selectMsg(\''+k+'\', -1)">'+MSGS[k].label+'</button>');
+  });
+  btns.push('<div style="width:100%;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Offerte convenienti</div>');
+  ['offerta_conveniente','offerta_risparmio','offerta_cambio_anticipato','offerta_confronto'].forEach(k => {
+    btns.push('<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;background:#EAF3FE;color:#1a4d8f;border-color:#aacef5" onclick="selectMsg(\''+k+'\', -1)">'+MSGS[k].label+'</button>');
   });
   if (begas.length) {
     btns.push('<div style="width:100%;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Pratiche</div>');
