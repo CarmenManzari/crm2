@@ -1001,8 +1001,18 @@ var db = firebase.firestore();
 var syncEnabled = true;
 
 // Auth anonima automatica — rende il database sicuro
+var _authReady = false;
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user && !_authReady) {
+    _authReady = true;
+    loadOfferte();
+    loadTemplates();
+    loadData();
+  }
+});
 firebase.auth().signInAnonymously().catch(function(err) {
   console.error("Errore auth anonima:", err);
+  if (!_authReady) { _authReady = true; loadOfferte(); loadTemplates(); loadData(); }
 });
 var unsubscribe = null;
 
@@ -4217,9 +4227,7 @@ unameEl.style.cssText = 'font-size:11px;color:#888;font-weight:600;padding:3px 8
 unameEl.textContent = '👤 ' + window._userName;
 document.querySelector('.topbar-right').prepend(unameEl);
 
-loadOfferte();
-loadTemplates();
-loadData();
+// loadData, loadOfferte e loadTemplates vengono chiamati da onAuthStateChanged
 </script>
 </div><!-- /page-wrap -->
 </body>
