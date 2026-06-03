@@ -461,7 +461,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 
 <!-- ===== MODAL NUOVO/MODIFICA ===== -->
 <div class="modal-bg" id="newModal">
-<div class="modal" style="max-width:680px">
+<div class="modal" style="max-width:920px">
   <h2 id="modalTitle">Nuovo contratto</h2>
   <div id="single_form" style="max-height:65vh;overflow-y:auto;padding-right:4px">
   <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0">Anagrafica</div>
@@ -823,7 +823,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 
 <!-- ===== MODAL IMPORTA UNIVERSALE ===== -->
 <div class="modal-bg" id="importModal">
-<div class="modal" style="max-width:680px">
+<div class="modal" style="max-width:920px">
   <h2>⬆ Importa da CSV</h2>
   <div style="font-size:12px;color:#555;margin-bottom:10px;line-height:1.6">
     Importa contatti da <strong>qualsiasi file CSV</strong> — Bitrix24, Excel, Google Sheets, altri CRM.<br>
@@ -896,7 +896,7 @@ td{padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;ve
 
 <!-- ===== MODAL LETTERE ===== -->
 <div class="modal-bg" id="lettereModal">
-<div class="modal" style="max-width:680px">
+<div class="modal" style="max-width:920px">
   <h2 id="lett_title">📄 Genera lettera</h2>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="lett_btn_row"></div>
   <div id="lett_preview" style="display:none">
@@ -1569,7 +1569,7 @@ function renderPodList(){
   const el=document.getElementById('pod_list');
   const emp=document.getElementById('pod_empty');
   emp.style.display=tmpPods.length?'none':'block';
-  el.innerHTML=tmpPods.map((p,i)=>`
+  const podCards = tmpPods.map((p,i)=>`
     <div class="pod-card">
       <div class="pod-card-header">
         <span class="pod-card-title">${p.tipo==='pod'?'⚡ POD — Luce':'🔥 PDR — Gas'} #${i+1}</span>
@@ -1716,7 +1716,7 @@ function renderBegaList(){
   const el=document.getElementById('bega_list');
   const emp=document.getElementById('bega_empty');
   emp.style.display=tmpBegas.length?'none':'block';
-  el.innerHTML=tmpBegas.map((b,i)=>`
+  const begaCards=tmpBegas.map((b,i)=>`
     <div class="bega-card ${b.stato==='chiusa'?'chiusa':''}">
       <div class="bega-header">
         <span class="bega-tipo">${b.stato==='chiusa'?'✅':'🔥'} ${b.tipo||'Pratica'}</span>
@@ -1795,7 +1795,7 @@ function renderGettoniList() {
   if (!tmpGettoni.length) { el.innerHTML=''; emp.style.display='block'; return; }
   emp.style.display='none';
   var totale = tmpGettoni.reduce(function(s,g){ return s + (parseFloat(g.importo)||0)*(parseInt(g.quantita)||1); }, 0);
-  el.innerHTML = tmpGettoni.map(function(g,i) {
+  var getCards = tmpGettoni.map(function(g,i) {
     var tipoOpts = GETTONE_TIPI.map(function(t){ return '<option value="'+t.val+'" '+(g.tipo===t.val?'selected':'')+'>'+t.label+'</option>'; }).join('');
     var catOpts  = GETTONE_CAT.map(function(c){ return '<option '+(g.categoria===c?'selected':'')+'>'+c+'</option>'; }).join('');
     var statoOpts= GETTONE_STATO.map(function(s){ return '<option value="'+s.val+'" '+(g.stato===s.val?'selected':'')+'>'+s.label+'</option>'; }).join('');
@@ -1813,8 +1813,13 @@ function renderGettoniList() {
       + '<div class="form-group"><label>Stato pagamento</label><select onchange="tmpGettoni['+i+'].stato=this.value;renderGettoniList()">'+statoOpts+'</select></div>'
       + '<div class="form-group"><label>Note</label><input type="text" value="'+(g.note||'')+'" placeholder="Es. sito via Roma 12" oninput="tmpGettoni['+i+'].note=this.value"></div>'
       + '</div></div>';
-  }).join('')
-  + '<div style="text-align:right;font-weight:700;font-size:13px;padding:6px 4px;color:#27500A">Totale gettoni: € '+totale.toFixed(2)+'</div>';
+  }).join('');
+  var totRow = '<div style="text-align:right;font-weight:700;font-size:13px;padding:6px 4px;color:#27500A">Totale gettoni: € '+totale.toFixed(2)+'</div>';
+  if (tmpGettoni.length > 1) {
+    el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + getCards + '</div>' + totRow;
+  } else {
+    el.innerHTML = getCards + totRow;
+  }
 }
 
 var tmpServizi = [];
@@ -1871,7 +1876,46 @@ function renderServiziList() {
       + extraFields
       + '<div class="form-group full"><label>Note</label><input type="text" value="'+esc(s.note)+'" placeholder="Note aggiuntive..." oninput="tmpServizi['+i+'].note=this.value"></div>'
       + '</div></div>';
+  });
+  // build html
+  var srvHtml = tmpServizi.map(function(s, i) {
+    var label = SERVIZIO_LABEL[s.tipo] || s.tipo;
+    var esc2 = function(v){ return (v||'').toString().replace(/"/g,'&quot;'); };
+    var extraFields = '';
+    if (s.tipo === 'tel') {
+      extraFields = '<div class="form-group"><label>Piano / Tariffa</label><input type="text" value="'+esc2(s.piano)+'" oninput="tmpServizi['+i+'].piano=this.value"></div>';
+    } else if (s.tipo === 'fotovoltaico') {
+      extraFields = '<div class="form-group"><label>kWp impianto</label><input type="text" value="'+esc2(s.kw)+'" oninput="tmpServizi['+i+'].kw=this.value"></div>';
+    } else if (s.tipo === 'ass') {
+      extraFields = '<div class="form-group"><label>N° polizza</label><input type="text" value="'+esc2(s.polizza)+'" oninput="tmpServizi['+i+'].polizza=this.value"></div>'
+        + '<div class="form-group"><label>Targa</label><input type="text" value="'+esc2(s.targa)+'" oninput="tmpServizi['+i+'].targa=this.value"></div>';
+    } else if (s.tipo === 'auto') {
+      extraFields = '<div class="form-group"><label>Targa / Modello</label><input type="text" value="'+esc2(s.targa)+'" oninput="tmpServizi['+i+'].targa=this.value"></div>'
+        + '<div class="form-group"><label>N° contratto</label><input type="text" value="'+esc2(s.nnoleggio)+'" oninput="tmpServizi['+i+'].nnoleggio=this.value"></div>';
+    }
+    return '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;background:#fafafa">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '<span style="font-weight:700;font-size:13px">'+label+'</span>'
+      + '<button class="btn" style="font-size:11px;padding:2px 8px;background:#FFF0F0;color:#8B1A1A;border-color:#FFBBBB" onclick="removeServizio('+i+')">✕ Rimuovi</button>'
+      + '</div>'
+      + '<div class="form-grid">'
+      + '<div class="form-group"><label>Fornitore</label><input type="text" value="'+esc2(s.fornitore)+'" oninput="tmpServizi['+i+'].fornitore=this.value"></div>'
+      + '<div class="form-group"><label>Codice contratto</label><input type="text" value="'+esc2(s.codice)+'" oninput="tmpServizi['+i+'].codice=this.value"></div>'
+      + '<div class="form-group"><label>Data inizio</label><input type="date" value="'+esc2(s.inizio)+'" oninput="tmpServizi['+i+'].inizio=this.value"></div>'
+      + '<div class="form-group"><label>Data scadenza</label><input type="date" value="'+esc2(s.scadenza)+'" oninput="tmpServizi['+i+'].scadenza=this.value"></div>'
+      + '<div class="form-group"><label>Valore mensile (€)</label><input type="number" value="'+esc2(s.valore)+'" oninput="tmpServizi['+i+'].valore=this.value"></div>'
+      + '<div class="form-group"><label>Stato</label><select oninput="tmpServizi['+i+'].stato=this.value">'
+      + ['Proposta','In lavorazione','Attivo','Scaduto'].map(function(st){return '<option '+(s.stato===st?'selected':'')+'>'+st+'</option>';}).join('')
+      + '</select></div>'
+      + extraFields
+      + '<div class="form-group full"><label>Note</label><input type="text" value="'+esc2(s.note)+'" oninput="tmpServizi['+i+'].note=this.value"></div>'
+      + '</div></div>';
   }).join('');
+  if (tmpServizi.length > 1) {
+    el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + srvHtml + '</div>';
+  } else {
+    el.innerHTML = srvHtml;
+  }
 }
 
 function esc(v){ return (v||'').toString().replace(/"/g,'&quot;'); }
